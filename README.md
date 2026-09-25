@@ -1,0 +1,76 @@
+# Equal Earth — a true-area world map
+
+An interactive world map in which **every country is drawn at its true relative
+area**: Greenland is ~1/14 of Africa, not "the same size". Built completely from
+scratch — the projection is *derived* here (see [`docs/MATH.md`](docs/MATH.md)),
+and there are **zero libraries**: no d3, no proj4, no map SDK.
+
+![Equal Earth world map](docs/screenshot.png)
+
+## Run it
+
+```bash
+npm run serve      # static server via python3 (port 8000)
+# open http://localhost:8000
+```
+
+```bash
+npm test           # 27 tests: math invariants + the equal-area proof
+```
+
+## What's inside
+
+| Path | Purpose |
+|---|---|
+| `src/projection.js` | The projection itself: forward `(φ,λ)→(x,y)`, inverse (own Newton solver), y-curve |
+| `src/area.js` | Verification math: signed spherical excess, shoelace, great-circle densification, longitude unwrapping |
+| `src/geo.js` | GeoJSON traversal (Polygon / MultiPolygon) |
+| `src/render.js` | Projected SVG paths, graticule, map outline |
+| `src/main.js` | Fetches data, mounts the SVG |
+| `docs/MATH.md` | Full derivation from the equal-area condition down to the code |
+| `data/world.geojson` | Natural Earth 110m countries (public domain), `data/download.sh` refetches it |
+| `test/` | 27 tests across 5 files |
+
+## The math in one paragraph
+
+A map is equal-area iff its Jacobian satisfies `det ∂(x,y)/∂(λ,φ) = cos φ`.
+For the pseudocylindrical family `y = Y(θ)`, `x = (2/√3)·λ·cos θ / Y′(θ)` this
+collapses to `k·cos θ·dθ/dφ = cos φ`, which integrates to
+`sin θ = (√3/2)·sin φ`. Notably, the y-curve `Y` vanishes from the condition —
+**any** monotonic y-curve is exactly equal-area; the published Equal-Earth
+coefficients only tune *shape* distortion, never area.
+Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
+
+## How "equal-area" is proven (not asserted)
+
+1. **Local proof** — finite-difference Jacobian over a lat/lon grid:
+   `det / cos φ = 1` to within `1.8e-10`.
+2. **Global proof** — for each of the 177 countries, spherical area (signed
+   spherical excess, van Oosterom–Strackee) vs projected planar area (shoelace
+   over great-circle-densified rings): ratio within **0.18%** worst-case.
+3. **Independent cross-checks** — Antarctica computed three ways (spherical fan,
+   Green's theorem in `(λ, sin φ)`, projected shoelace) agrees to 5 significant
+   digits; 9 countries' absolute areas match published values within 4.2%.
+4. **External oracle** — PROJ's published `+proj=eqearth` output validates our
+   independent implementation (tests only, never used in code).
+
+## Design decisions
+
+- **JavaScript, zero deps** — the map is an interactive web page; SVG gives
+  per-country `<path>` elements with native hover/click for free.
+- **Own Newton solver for the inverse** — the y-curve is strictly monotonic, so
+  a bracketed Newton with bisection fallback converges exactly; no published
+  regression series needed.
+- **Own antimeridian handling** — longitudes are unwrapped before projection;
+   pole-to-pole legs keep their raw Δλ because on this projection *the pole is a
+   line* (folding it away silently changes the region being measured).
+
+## Status
+
+- [x] Projection math derived, implemented, tested
+- [x] Equal-area verified end-to-end (27 tests green)
+- [x] Interactive SVG map with hover
+- [ ] Phase 5: refit the y-curve coefficients ourselves (distortion optimization)
+- [ ] Phase 6: richer interactions (click-to-pin, area readouts, size comparison)
+
+Data: Natural Earth 110m Admin 0 countries (public domain).

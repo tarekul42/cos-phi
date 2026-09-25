@@ -1,0 +1,11 @@
+{
+  "name": "equal-earth-projection",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Equal-Earth equal-area world map, derived and implemented from scratch (no libraries).",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8000"
+  }
+}
