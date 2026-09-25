@@ -1,102 +1,181 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Equal Earth — a true-area world map</title>
-    <style>
-      :root {
-        color-scheme: dark;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: #0e1420;
-        color: #e6edf3;
-        font-family:
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          sans-serif;
-      }
-      main {
-        width: min(96vw, 1180px);
-        padding: 2.2rem 0 1.4rem;
-        text-align: center;
-      }
-      h1 {
-        margin: 0;
-        font-size: clamp(1.6rem, 3.4vw, 2.4rem);
-        letter-spacing: 0.04em;
-        font-weight: 650;
-      }
-      .sub {
-        margin: 0.5rem 0 1.4rem;
-        color: #9fb0c5;
-        font-size: clamp(0.85rem, 1.6vw, 1rem);
-      }
-      svg {
-        display: block;
-        width: 100%;
-        height: auto;
-        background: #10233c;
-        border-radius: 10px;
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-      }
-      .country {
-        fill: #8fbf9f;
-        stroke: #10233c;
-        stroke-width: 0.0035;
-        stroke-linejoin: round;
-        cursor: pointer;
-        transition: fill 120ms ease;
-      }
-      .country:hover {
-        fill: #ffd166;
-      }
-      .graticule {
-        fill: none;
-        stroke: rgba(255, 255, 255, 0.09);
-        stroke-width: 0.0022;
-        pointer-events: none;
-      }
-      .outline {
-        fill: none;
-        stroke: rgba(255, 255, 255, 0.5);
-        stroke-width: 0.005;
-        stroke-linejoin: round;
-        pointer-events: none;
-      }
-      .foot {
-        margin-top: 1.1rem;
-        color: #6e8098;
-        font-size: 0.8rem;
-        line-height: 1.5;
-      }
-      .foot code {
-        color: #9fb0c5;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>EQUAL EARTH</h1>
-      <p class="sub">
-        Every country at its true relative area — projection derived from first
-        principles, no libraries.
-      </p>
-      <svg id="map" role="img" aria-label="Equal Earth world map"></svg>
-      <p class="foot">
-        Equal-area pseudocylindrical projection · areas verified against
-        spherical excess (<code>npm test</code>) · hover a country
-      </p>
-    </main>
-    <script type="module" src="src/main.js"></script>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equal Earth — a true-area world map</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #0e1420;
+    color: #e6edf3;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main {
+    width: min(96vw, 1180px);
+    padding: 2.2rem 0 1.4rem;
+    text-align: center;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+    letter-spacing: 0.04em;
+    font-weight: 650;
+  }
+  .sub {
+    margin: 0.5rem 0 1.4rem;
+    color: #9fb0c5;
+    font-size: clamp(0.85rem, 1.6vw, 1rem);
+  }
+  .mapwrap {
+    position: relative;
+    width: 100%;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #10233c;
+    border-radius: 10px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  }
+  .country {
+    fill: #8fbf9f;
+    stroke: #10233c;
+    stroke-width: 0.0035;
+    stroke-linejoin: round;
+    cursor: pointer;
+    transition: fill 120ms ease;
+  }
+  .country:hover {
+    fill: #ffd166;
+  }
+  .country.pinned {
+    fill: #ffb703;
+    stroke: #ffffff;
+    stroke-width: 0.006;
+  }
+  .ghost {
+    fill: rgba(255, 80, 80, 0.14);
+    stroke: #ff6b6b;
+    stroke-width: 0.0045;
+    stroke-dasharray: 0.016 0.011;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .graticule {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.09);
+    stroke-width: 0.0022;
+    pointer-events: none;
+  }
+  .outline {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 0.005;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .card {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 5;
+    min-width: 235px;
+    max-width: 300px;
+    padding: 12px 15px;
+    text-align: left;
+    background: rgba(9, 20, 36, 0.93);
+    border: 1px solid #2a3d57;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+  .card[hidden] { display: none; }
+  .card-name {
+    font-size: 1.02rem;
+    font-weight: 680;
+    letter-spacing: 0.04em;
+    color: #ffd166;
+  }
+  .card-area {
+    margin-top: 5px;
+    font-size: 1.45rem;
+    font-weight: 680;
+    color: #8fbf9f;
+    font-variant-numeric: tabular-nums;
+  }
+  .card-sub {
+    margin-top: 1px;
+    color: #9fb0c5;
+    font-size: 0.78rem;
+  }
+  .card-merc {
+    margin-top: 8px;
+    color: #e6edf3;
+    font-size: 0.82rem;
+  }
+  .card-merc b { color: #ff8fa3; font-weight: 680; }
+  .ghostlab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    color: #9fb0c5;
+    font-size: 0.78rem;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .ghostlab input { accent-color: #ff6b6b; cursor: pointer; }
+  .card-hint {
+    margin-top: 8px;
+    color: #6e8098;
+    font-size: 0.7rem;
+  }
+  .foot {
+    margin-top: 1.1rem;
+    color: #6e8098;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .foot code {
+    color: #9fb0c5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .foot a { color: #9fb0c5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EQUAL EARTH</h1>
+  <p class="sub">Every country at its true relative area — projection derived from first principles, no libraries.</p>
+  <div class="mapwrap">
+    <svg id="map" role="img" aria-label="Equal Earth world map"></svg>
+    <aside id="card" class="card" hidden>
+      <div id="card-name" class="card-name"></div>
+      <div id="card-area" class="card-area"></div>
+      <div id="card-sub" class="card-sub"></div>
+      <div id="card-merc" class="card-merc"></div>
+      <label class="ghostlab">
+        <input type="checkbox" id="ghost-toggle" checked>
+        show Mercator ghost (same map width)
+      </label>
+      <div id="card-hint" class="card-hint"></div>
+    </aside>
+  </div>
+  <p class="foot">
+    Equal-area pseudocylindrical projection · areas verified against spherical excess
+    (<code>npm test</code>) · hover for area · click to pin ·
+    <a href="compare.html">coefficient comparison</a>
+  </p>
+</main>
+<script type="module" src="src/main.js"></script>
+</body>
 </html>

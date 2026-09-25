@@ -11,12 +11,13 @@ and there are **zero libraries**: no d3, no proj4, no map SDK.
 
 ```bash
 npm run serve      # static server via python3 (port 8000)
-# open http://localhost:8000            — the main map
+# open http://localhost:8000             — the main map (hover, click to pin)
+# open http://localhost:8000/?pin=Greenland — deep link to a pinned country
 # open http://localhost:8000/compare.html — published vs our coefficients
 ```
 
 ```bash
-npm test           # 34 tests: math invariants + the equal-area proof
+npm test           # 43 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -28,12 +29,13 @@ npm test           # 34 tests: math invariants + the equal-area proof
 | `src/geo.js` | GeoJSON traversal (Polygon / MultiPolygon) |
 | `src/render.js` | Projected SVG paths, graticule, map outline (coefficients pluggable) |
 | `src/distortion.js` | Tissot indicatrix + ω metrics used to fit/verify our coefficients |
-| `src/main.js` | Fetches data, mounts the SVG |
+| `src/main.js` | Fetches data, mounts the SVG, wires hover/pin/ghost interactions |
+| `src/stats.js` | Per-country facts for the info card: true area, world share, Mercator inflation |
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 110m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 34 tests across 6 files |
+| `test/` | 43 tests across 7 files |
 
 ## The math in one paragraph
 
@@ -70,6 +72,10 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 - **Own antimeridian handling** — longitudes are unwrapped before projection;
   pole-to-pole legs keep their raw Δλ because on this projection _the pole is a
   line_ (folding it away silently changes the region being measured).
+- **Mercator ghost, aligned by map width** — the size-comparison overlay
+  renders each country's Mercator outline at the same world width as this map
+  (`x` scaled by `2/√3`, so both match at the equator), centered on the
+  country's map centroid: a shape that visibly dwarfs the truth as |φ| grows.
 
 ## Status
 
@@ -79,6 +85,8 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 - [x] Phase 5: our own coefficients (`OURS_A`, `OURS_FIXED_ASPECT_A`) — worst-case
       ω 109.5° → 104.1°, polar band 80.1° → 72.1°, equator held, RMS +2.8% (the
       honest trade); `compare.html` shows all three maps with Tissot indicatrices
-- [ ] Phase 6: richer interactions (click-to-pin, area readouts, size comparison)
+- [x] Phase 6: interactions — hover area readouts (true km² + % of Earth),
+      click-to-pin (Esc / ocean click clears, `?pin=` deep links), Mercator
+      size-comparison ghost overlay with toggle
 
 Data: Natural Earth 110m Admin 0 countries (public domain).

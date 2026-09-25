@@ -192,3 +192,92 @@ export function featurePlanarArea(feature, maxDeg = 1) {
   }
   return total;
 }
+
+// --- planar centroid ---------------------------------------------------------
+
+// Area-weighted centroid of a planar polygon (signed, so any consistent
+// winding works). Falls back to the vertex average for degenerate shapes.
+export function planarCentroid(pts) {
+  const n = pts.length;
+  if (n === 0) return [0, 0];
+  let a2 = 0; // 2 * signed area
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const cross = pts[i][0] * pts[j][1] - pts[j][0] * pts[i][1];
+    a2 += cross;
+    cx += (pts[i][0] + pts[j][0]) * cross;
+    cy += (pts[i][1] + pts[j][1]) * cross;
+  }
+  if (Math.abs(a2) < 1e-18) {
+    let sx = 0;
+    let sy = 0;
+    for (const p of pts) {
+      sx += p[0];
+      sy += p[1];
+    }
+    return [sx / n, sy / n];
+  }
+  return [cx / (3 * a2), cy / (3 * a2)];
+}
+
+// Centroid of a feature ON THE MAP (square sphere-radii), taken from its
+// largest exterior ring so overseas islands don't drag the marker offshore.
+export function featureMapCentroid(feature, maxDeg = 1) {
+  let best = null;
+  let bestArea = 0;
+  for (const rings of polygonsOf(feature.geometry)) {
+    const pts = projectRing(rings[0], maxDeg);
+    const a = Math.abs(planarPolygonArea(pts));
+    if (a > bestArea) {
+      bestArea = a;
+      best = pts;
+    }
+  }
+  return best ? planarCentroid(best) : [0, 0];
+}
+
+// --- Mercator comparison -----------------------------------------------------
+//
+// The classic "lies about size" yardstick: x = lambda,
+// y = ln(tan(pi/4 + phi/2)) on the unit sphere. Linear scale is 1/cos(phi),
+// so a region's Mercator planar area divided by its true spherical area is
+// exactly how many times Mercator inflates it (equator: 1, poles: unbounded).
+
+export function mercatorProject(lonDeg, latDeg) {
+  const clamped = Math.min(89.999, Math.max(-89.999, latDeg)) * D2R;
+  return [
+    lonDeg * D2R,
+    Math.log(Math.tan(Math.PI / 4 + clamped / 2)),
+  ];
+}
+
+// Does any vertex sit exactly on a pole? (Mercator area is unbounded then.)
+export function ringTouchesPole(ring) {
+  return ring.some(([, lat]) => Math.abs(lat) >= 90 - 1e-9);
+}
+
+// Mercator planar area of a ring (same units as steradians: radians^2),
+// densified like the map projection so straight chords follow the curve.
+export function mercatorRing(ringDeg, maxDeg = 1) {
+  const dense = densifyRing(ringDeg, maxDeg);
+  return dense.map(([lon, lat]) => mercatorProject(lon, lat));
+}
+
+// Mercator inflation factor of a feature vs its true area. Infinity when the
+// feature touches a pole (its Mercator image is unbounded — Antarctica).
+export function featureMercatorFactor(feature) {
+  let merc = 0;
+  let truth = 0;
+  for (const rings of polygonsOf(feature.geometry)) {
+    if (ringTouchesPole(rings[0])) return Infinity;
+    merc += Math.abs(planarPolygonArea(mercatorRing(rings[0])));
+    truth += Math.abs(sphericalPolygonArea(rings[0]));
+    for (let i = 1; i < rings.length; i++) {
+      merc -= Math.abs(planarPolygonArea(mercatorRing(rings[i])));
+      truth -= Math.abs(sphericalPolygonArea(rings[i]));
+    }
+  }
+  return truth > 0 ? merc / truth : NaN;
+}
