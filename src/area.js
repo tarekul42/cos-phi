@@ -253,9 +253,14 @@ export function mercatorProject(lonDeg, latDeg) {
   ];
 }
 
-// Does any vertex sit exactly on a pole? (Mercator area is unbounded then.)
+// Does any vertex come effectively to a pole? Natural Earth 50m stops its
+// Antarctica rings at -89.998926 (not exactly -90), so "at the pole" means
+// within 0.01 degrees — no other country comes anywhere near that. Mercator
+// area for such a feature is unbounded (the pole is enclosed).
+const POLE_LAT = 89.99;
+
 export function ringTouchesPole(ring) {
-  return ring.some(([, lat]) => Math.abs(lat) >= 90 - 1e-9);
+  return ring.some(([, lat]) => Math.abs(lat) >= POLE_LAT);
 }
 
 // Mercator planar area of a ring (same units as steradians: radians^2),

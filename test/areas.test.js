@@ -80,7 +80,7 @@ test("projectRing handles an antimeridian-crossing ring without smearing", () =>
 
 // --- the proof: every country's projected area equals its spherical area ----
 
-test("projected area / spherical area == 1 for all 177 countries", () => {
+test("projected area / spherical area == 1 for every country", () => {
   const rows = [];
   for (const f of gj.features) {
     const name = f.properties.ADMIN || f.properties.NAME;
@@ -102,13 +102,13 @@ test("projected area / spherical area == 1 for all 177 countries", () => {
   );
 
   assert.ok(
-    dev < 0.002,
+    dev < 0.001,
     `worst: ${worst.name} ratio ${worst.ratio} (dev ${(dev * 100).toFixed(3)}%)`,
   );
 });
 
 // --- independent check: absolute areas against published country sizes ------
-// (110m borders are simplified, so a few percent of slack is expected;
+// (borders are still simplified, so a few percent of slack is expected;
 //  this catches gross errors — complement areas, factor-of-2, pole bugs.)
 
 test("absolute areas match published country areas within 8%", () => {
@@ -118,11 +118,11 @@ test("absolute areas match published country areas within 8%", () => {
     India: 3_287_263,
     China: 9_596_960,
     "Democratic Republic of the Congo": 2_344_858,
-    // NE 110m traces Antarctica's coast at ~12.24M km² (coarser than the often
+    // NE 50m traces Antarctica's coast at ~12.256M km² (coarser than the often
     // cited 14.2M, which follows fuller ice-shelf outlines). Cross-validated:
     // spherical fan, Green's theorem in (λ, sinφ) and projected shoelace all
-    // agree on 12.236–12.238M, so this pins the *data*, not a formula quirk.
-    Antarctica: 12_240_000,
+    // agree on 12.2564–12.2568M, so this pins the *data*, not a formula quirk.
+    Antarctica: 12_256_000,
     Russia: 17_098_242,
     Canada: 9_984_670,
   };

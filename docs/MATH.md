@@ -331,9 +331,9 @@ mid-latitude map edge. Equal-area is untouched: §9's tests re-verify
 | Round-trip `unproject(project(p))` | error < 1e-9° | max error **< 1e-9°** over 1,665 grid points |
 | `Y′(θ) > 0` on `[−π/3, π/3]` | always | confirmed at 121 samples |
 | `θ(±90°)` | ±π/3 | exact to 1e-15 |
-| **Projected ÷ spherical area, all 177 countries** | 1 ± 0.2% | worst **0.18%** (Cyprus); median ≈ 0.02% |
-| Absolute area cross-check (9 countries vs published) | ± 8% | worst **4.2%** (India; coarse 110m borders) |
-| Antarctica, three independent methods | agree | fan **12,236,252** / Green **12,238,054** / projected **12,238,000** km² |
+| **Projected ÷ spherical area, all 242 countries** | 1 ± 0.1% | worst **0.025%** (Faroe Islands); median ≈ 0.0008% |
+| Absolute area cross-check (8 countries vs published) | ± 8% | worst **4.0%** (India) |
+| Antarctica, three independent methods | agree | fan **12,256,413** / Green **12,256,671** / projected **12,256,751** km² (spread 0.003%) |
 
 Reproduce with:
 
@@ -344,10 +344,10 @@ npm test
 The Jacobian test is the proof of the project's central promise: if
 `det = cos φ` everywhere, then **every country's area on our map is exactly its
 real area** (up to floating-point and polygon-approximation error).
-`test/areas.test.js` then demonstrates it end-to-end: each of the 177 countries'
+`test/areas.test.js` then demonstrates it end-to-end: each of the 242 countries'
 spherical area (signed spherical excess) is compared with its projected planar
 area (shoelace over great-circle-densified, projected rings) — all land within
-0.2%, worst-case 0.18%.
+0.1%, worst-case 0.025%.
 
 ---
 

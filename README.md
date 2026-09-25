@@ -34,7 +34,7 @@ npm test           # 45 tests: math invariants + the equal-area proof
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
-| `data/world.geojson` | Natural Earth 110m countries (public domain), `data/download.sh` refetches it |
+| `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
 | `test/` | 45 tests across 7 files |
 
 ## The math in one paragraph
@@ -53,12 +53,12 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 
 1. **Local proof** — finite-difference Jacobian over a lat/lon grid:
    `det / cos φ = 1` to within `1.8e-10`.
-2. **Global proof** — for each of the 177 countries, spherical area (signed
+2. **Global proof** — for each of the 242 countries, spherical area (signed
    spherical excess, van Oosterom–Strackee) vs projected planar area (shoelace
-   over great-circle-densified rings): ratio within **0.18%** worst-case.
+   over great-circle-densified rings): ratio within **0.025%** worst-case.
 3. **Independent cross-checks** — Antarctica computed three ways (spherical fan,
    Green's theorem in `(λ, sin φ)`, projected shoelace) agrees to 5 significant
-   digits; 9 countries' absolute areas match published values within 4.2%.
+   digits; 8 countries' absolute areas match published values within 4.0%.
 4. **External oracle** — PROJ's published `+proj=eqearth` output validates our
    independent implementation (tests only, never used in code).
 
@@ -90,4 +90,4 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       size-comparison ghost overlay with toggle, two-country overlay
       (true size, translated never scaled — `?pin=A&vs=B`, ratio line)
 
-Data: Natural Earth 110m Admin 0 countries (public domain).
+Data: Natural Earth 50m Admin 0 countries (public domain).
