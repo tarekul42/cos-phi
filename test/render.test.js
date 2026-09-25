@@ -1,12 +1,17 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { test } from "node:test";
 
-import { ringToPath, featureToPath, graticulePaths, outlinePath } from '../src/render.js';
-import { bounds } from '../src/projection.js';
+import { bounds } from "../src/projection.js";
+import {
+  featureToPath,
+  graticulePaths,
+  outlinePath,
+  ringToPath,
+} from "../src/render.js";
 
 const gj = JSON.parse(
-  fs.readFileSync(new URL('../data/world.geojson', import.meta.url), 'utf8')
+  fs.readFileSync(new URL("../data/world.geojson", import.meta.url), "utf8"),
 );
 
 const NUM = /-?\d+(\.\d+)?([eE][+-]?\d+)?/g;
@@ -15,8 +20,14 @@ function coordsOf(path) {
   return (path.match(NUM) ?? []).map(Number);
 }
 
-test('ringToPath emits a well-formed closed subpath', () => {
-  const d = ringToPath([[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]);
+test("ringToPath emits a well-formed closed subpath", () => {
+  const d = ringToPath([
+    [0, 0],
+    [10, 0],
+    [10, 10],
+    [0, 10],
+    [0, 0],
+  ]);
   assert.match(d, /^M-?\d/);
   assert.match(d, /Z$/);
   const nums = coordsOf(d);
@@ -24,7 +35,7 @@ test('ringToPath emits a well-formed closed subpath', () => {
   assert.ok(nums.length >= 4 * 2);
 });
 
-test('no country path contains NaN or Infinity', () => {
+test("no country path contains NaN or Infinity", () => {
   for (const f of gj.features) {
     const d = featureToPath(f);
     assert.ok(d.length > 0, f.properties.ADMIN);
@@ -32,23 +43,29 @@ test('no country path contains NaN or Infinity', () => {
   }
 });
 
-test('every projected coordinate stays inside the map bounds', () => {
+test("every projected coordinate stays inside the map bounds", () => {
   const b = bounds();
   const margin = 0.05; // antimeridian-unwrapped rings may poke out slightly
   for (const f of gj.features) {
     const nums = coordsOf(featureToPath(f));
     const xs = nums.filter((_, i) => i % 2 === 0);
     const ys = nums.filter((_, i) => i % 2 === 1);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    assert.ok(minX >= -b.xMax - margin && maxX <= b.xMax + margin,
-      `${f.properties.ADMIN}: x in [${minX}, ${maxX}]`);
-    assert.ok(minY >= -b.yMax - margin && maxY <= b.yMax + margin,
-      `${f.properties.ADMIN}: y in [${minY}, ${maxY}]`);
+    const minX = Math.min(...xs),
+      maxX = Math.max(...xs);
+    const minY = Math.min(...ys),
+      maxY = Math.max(...ys);
+    assert.ok(
+      minX >= -b.xMax - margin && maxX <= b.xMax + margin,
+      `${f.properties.ADMIN}: x in [${minX}, ${maxX}]`,
+    );
+    assert.ok(
+      minY >= -b.yMax - margin && maxY <= b.yMax + margin,
+      `${f.properties.ADMIN}: y in [${minY}, ${maxY}]`,
+    );
   }
 });
 
-test('graticule: 5 parallels + 13 meridians, all finite', () => {
+test("graticule: 5 parallels + 13 meridians, all finite", () => {
   const paths = graticulePaths();
   assert.equal(paths.length, 5 + 13);
   for (const p of paths) {
@@ -57,7 +74,7 @@ test('graticule: 5 parallels + 13 meridians, all finite', () => {
   }
 });
 
-test('outline is a closed path spanning the full map', () => {
+test("outline is a closed path spanning the full map", () => {
   const d = outlinePath();
   assert.match(d, /^M/);
   assert.match(d, /Z$/);

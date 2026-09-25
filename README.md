@@ -2,7 +2,7 @@
 
 An interactive world map in which **every country is drawn at its true relative
 area**: Greenland is ~1/14 of Africa, not "the same size". Built completely from
-scratch — the projection is *derived* here (see [`docs/MATH.md`](docs/MATH.md)),
+scratch — the projection is _derived_ here (see [`docs/MATH.md`](docs/MATH.md)),
 and there are **zero libraries**: no d3, no proj4, no map SDK.
 
 ![Equal Earth world map](docs/screenshot.png)
@@ -11,25 +11,29 @@ and there are **zero libraries**: no d3, no proj4, no map SDK.
 
 ```bash
 npm run serve      # static server via python3 (port 8000)
-# open http://localhost:8000
+# open http://localhost:8000            — the main map
+# open http://localhost:8000/compare.html — published vs our coefficients
 ```
 
 ```bash
-npm test           # 27 tests: math invariants + the equal-area proof
+npm test           # 34 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
 
-| Path | Purpose |
-|---|---|
-| `src/projection.js` | The projection itself: forward `(φ,λ)→(x,y)`, inverse (own Newton solver), y-curve |
+| Path                 | Purpose                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| `src/projection.js` | The projection itself: forward `(φ,λ)→(x,y)`, inverse (own Newton solver), y-curve, coefficient sets (`PUBLISHED_A`, `OURS_A`, `OURS_FIXED_ASPECT_A`) |
 | `src/area.js` | Verification math: signed spherical excess, shoelace, great-circle densification, longitude unwrapping |
 | `src/geo.js` | GeoJSON traversal (Polygon / MultiPolygon) |
-| `src/render.js` | Projected SVG paths, graticule, map outline |
+| `src/render.js` | Projected SVG paths, graticule, map outline (coefficients pluggable) |
+| `src/distortion.js` | Tissot indicatrix + ω metrics used to fit/verify our coefficients |
 | `src/main.js` | Fetches data, mounts the SVG |
-| `docs/MATH.md` | Full derivation from the equal-area condition down to the code |
+| `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
+| `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
+| `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 110m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 27 tests across 5 files |
+| `test/` | 34 tests across 6 files |
 
 ## The math in one paragraph
 
@@ -38,7 +42,7 @@ For the pseudocylindrical family `y = Y(θ)`, `x = (2/√3)·λ·cos θ / Y′(�
 collapses to `k·cos θ·dθ/dφ = cos φ`, which integrates to
 `sin θ = (√3/2)·sin φ`. Notably, the y-curve `Y` vanishes from the condition —
 **any** monotonic y-curve is exactly equal-area; the published Equal-Earth
-coefficients only tune *shape* distortion, never area.
+coefficients only tune _shape_ distortion, never area.
 Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 
 ## How "equal-area" is proven (not asserted)
@@ -62,8 +66,8 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
   a bracketed Newton with bisection fallback converges exactly; no published
   regression series needed.
 - **Own antimeridian handling** — longitudes are unwrapped before projection;
-   pole-to-pole legs keep their raw Δλ because on this projection *the pole is a
-   line* (folding it away silently changes the region being measured).
+  pole-to-pole legs keep their raw Δλ because on this projection _the pole is a
+  line_ (folding it away silently changes the region being measured).
 
 ## Status
 

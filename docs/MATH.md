@@ -2,7 +2,8 @@
 
 *Everything here is derived from first principles. The only borrowed objects are
 four decimal constants (the y-curve coefficients), which are a shape-tuning
-choice — not a mathematical requirement. See §7.*
+choice — not a mathematical requirement; in Phase 5 we refit them ourselves
+against a stated distortion criterion. See §7 and §8.*
 
 ---
 
@@ -27,7 +28,7 @@ matrix of the transformation.
 If that identity holds, every infinitesimal patch keeps its area, so by
 integration **every finite region keeps its area** — every country, exactly.
 This is the property we set out to build, and it is what our test suite checks
-numerically (see §8).
+numerically (see §9).
 
 ---
 
@@ -191,14 +192,135 @@ bracket `[−π/3, π/3]`. No published regression series is needed. Inputs with
 | Parametrization with `cos θ / Y′(θ)` | **Ours** (§3) |
 | Solution `sin θ = (√3/2) sin φ`, `k = 2/√3` | **Ours** (§4) |
 | Forward/inverse formulas, Newton solver | **Ours** (§5–6) |
-| Coefficients `A₁…A₄` (y-curve shape) | Borrowed constants — they tune *shape only*; equal-area holds regardless (§4). Refitting them ourselves is the planned Phase 5. |
+| Coefficients `A₁…A₄` (y-curve shape) | Borrowed **and refitted**: equal-area holds regardless (§4), so in Phase 5 we refit them ourselves against our own criterion (§8). The published set remains the default (`PUBLISHED_A`); ours are `OURS_A` / `OURS_FIXED_ASPECT_A`. |
 
 No projection library (d3, PROJ, proj4) is used anywhere in the implementation.
-PROJ's published output appears **only as a test oracle** (§8).
+PROJ's published output appears **only as a test oracle** (§9).
 
 ---
 
-## 8. Verification (all values produced by running our code)
+## 8. Phase 5: fitting our own coefficients
+
+### 8.1 What is free to move
+
+§4 proved equal-area holds for **any** monotonic y-curve, so coefficients trade
+*shape only*. We search the published basis (terms `θ¹, θ³, θ⁷, θ⁹`):
+
+```
+Y(θ) = a₁θ + a₂θ³ + a₃θ⁷ + a₄θ⁹
+```
+
+with two constraints built into the parameterization:
+
+- **height pinned**: `Y(π/3)` fixed to the published value `1.317362759` — all
+  variants share one map height (and, in the fixed-aspect variant, one `a₁`
+  chosen so the full aspect ratio matches published);
+- **monotonicity**: `Y′ > 0` on `[−π/3, π/3]` enforced by a hard penalty, so
+  the map stays one-to-one.
+
+### 8.2 The distortion metric: Tissot's indicatrix
+
+Equal-area means `h·k = 1` — areas are exact; what varies is **shape**. The
+local frame differential of the projection (columns = images of the unit east
+and north vectors on the globe) is
+
+```
+C = [[ h    ,  x_φ ],
+     [ 0    ,  y_φ ]]
+```
+
+(`h = (2/√3)·cos θ / (Y′·cos φ)` is the east scale; the north column tilts
+because `x` also depends on `φ` through `θ`). Its singular values `a ≥ b` are
+the semi-axes of the image of a small circle on the globe, with `ab = 1`, and
+the **maximum angular distortion** is
+
+```
+ω = 2 · asin( (a − b) / (a + b) )              (Tissot, in degrees reported)
+```
+
+Note `x_φ ∝ λ`: ω depends on latitude **and** longitude — a point at 45° N
+looks different near the central meridian than at the map edge. Metrics are
+area-weighted over a `(φ, λ)` grid with weight `cos φ` (sphere area), on
+`|φ| ≤ 80°`. The poles are excluded: every pole-line projection degenerates
+there (`ω → 180°`), which would swamp any comparison.
+
+### 8.3 The criterion, and why it is a blend
+
+```
+f  =  rms80 / rms80(published)  +  0.75 · max80 / max80(published)
+```
+
+Both terms are normalized by the published map's own values, so `f < 1.75`
+beats the published coefficients. The exploration that fixed the 0.75 weight
+(20+ fits across criteria) found:
+
+- under the joint constraints *max ω ≤ published* **and** *equator ω ≤
+  published*, the best achievable RMS gain is **0.03°** — the published 2018
+  coefficients are essentially **Pareto-optimal** in this family: any real gain
+  on one axis costs another;
+- pure minimax (minimize `max80`) lowers the worst case to ≈ 89° but inflates
+  RMS by 40% and wrecks the mid-latitude edges;
+- `w = 0.75` is the knee: it buys a genuine worst-case and polar-band
+  improvement while keeping RMS within ~3% and the equator intact. Pure-RMS
+  fits, for reference, only reach 34.24 → 33.50°.
+
+### 8.4 The fit
+
+Hand-written Nelder–Mead (3–4 parameters, multi-start, deterministic LCG
+restarts), coarse 8°×10° grid inside the optimizer, fine 5° grid for reported
+numbers. Two variants:
+
+- `OURS_A` — `a₁, a₂, a₃` free (aspect follows `a₁`),
+- `OURS_FIXED_ASPECT_A` — `a₁` pinned to reproduce the published aspect.
+
+Reproduce (deterministic, identical output every run):
+
+```bash
+node scripts/fit-coefficients.js
+```
+
+### 8.5 Results (fine grid, `|φ| ≤ 80°`, computed by our code)
+
+| metric | published | ours — free | ours — fixed |
+|---|---|---|---|
+| rms ω (°) ↓ | **34.24** | 35.10 | 35.20 |
+| max ω (°) ↓ | 109.50 | 104.50 | **104.13** |
+| ω at equator (°) | 17.01 | 17.33 | 17.01 |
+| ω at (45°, edge) (°) | **51.18** | 55.61 | 56.49 |
+| ω at (75°, center) (°) | 80.07 | 72.58 | **72.05** |
+| aspect | 2.0546 | 2.0488 | 2.0546 |
+| criterion `f` ↓ | 1.7500 | **1.7408** | 1.7411 |
+
+Coefficients (full precision in `src/projection.js`):
+
+```
+OURS_A                 a₁ = 1.3440365099   a₂ = −0.1355443709
+                       a₃ =  0.0689603559   a₄ = −0.0196031458
+OURS_FIXED_ASPECT_A    a₁ = 1.3402640000   a₂ = −0.1323215775
+                       a₃ =  0.0688581681   a₄ = −0.0193451705
+```
+
+**The trade, honestly stated:** worst-case distortion drops by ≈ 5° and the
+polar band (Greenland, Siberia, northern Canada) by ≈ 8°; the equator —
+Africa, Indonesia, Brazil — is held at published quality (fixed variant
+exactly, free variant +0.3°); the price is +2.5–2.8% RMS and ≈ +5° at the
+mid-latitude map edge. Equal-area is untouched: §9's tests re-verify
+`det = cos φ` for *all three* coefficient sets.
+
+### 8.6 Verification added in Phase 5
+
+| Check | Result |
+|---|---|
+| `det ∂(x,y)/∂(λ,φ) = cos φ` for published + ours (875 points each) | worst deviation **< 1e-8** |
+| Local frame `h · y_φ = 1` for all family members | **1 ± 1e-12** |
+| `Y′ > 0` for all family members (1,201 samples each) | confirmed |
+| Height pinned `Y(π/3)` equal across members | within **1e-12** |
+| Criterion: max ω improved by > 3°, polar band by > 3°, RMS within 3% | confirmed for both variants |
+| Round-trip inverse with `OURS_A` | **< 1e-9°** |
+
+---
+
+## 9. Verification (all values produced by running our code)
 
 | Check | Expected | Measured |
 |---|---|---|
@@ -229,7 +351,7 @@ area (shoelace over great-circle-densified, projected rings) — all land within
 
 ---
 
-## 9. References
+## 10. References
 
 - Šavrič, B., Patterson, T., Jenny, B. (2018). *The Equal Earth map projection.*
   Int. J. Geographical Information Science, 33(3), 454–465.
