@@ -6,8 +6,8 @@
 //   - on the map     : shoelace over projected, great-circle-densified rings
 // Their ratio must be 1 everywhere — that is the project's core claim.
 
-import { project } from './projection.js';
-import { polygonsOf } from './geo.js';
+import { polygonsOf } from "./geo.js";
+import { project } from "./projection.js";
 
 const D2R = Math.PI / 180;
 const R2D = 180 / Math.PI;
@@ -89,7 +89,8 @@ export function unwrapRing(ring) {
     // A leg between two points AT THE POLE keeps its raw delta: on the map that
     // leg is the pole *line* (the pole spans the full edge width). Folding it
     // would close the ring at the wrong latitude and silently change the region.
-    const bothPoles = Math.abs(src[i][1]) === 90 && Math.abs(src[i - 1][1]) === 90;
+    const bothPoles =
+      Math.abs(src[i][1]) === 90 && Math.abs(src[i - 1][1]) === 90;
     const lon = bothPoles ? prev + d : prev + (d - 360 * Math.round(d / 360));
     out.push([lon, src[i][1]]);
     prev = lon;

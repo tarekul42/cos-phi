@@ -4,7 +4,9 @@
 // Returns an array of polygons; each polygon is an array of rings
 // (first ring = exterior, the rest = holes).
 export function polygonsOf(geometry) {
-  return geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.coordinates;
 }
 
 export function eachRing(geometry, fn) {

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equal Earth — coefficients compared</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #0e1420;
+    color: #e6edf3;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main {
+    width: min(97vw, 1500px);
+    margin: 0 auto;
+    padding: 1.6rem 0 2rem;
+    text-align: center;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+    letter-spacing: 0.04em;
+    font-weight: 650;
+  }
+  .sub {
+    margin: 0.45rem 0 1.2rem;
+    color: #9fb0c5;
+    font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: #10233c;
+    border-radius: 10px;
+    padding: 10px 10px 8px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+  }
+  .panel h2 {
+    margin: 2px 0 8px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .panel.ours h2 { color: #ffd166; }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #0b1a2e;
+    border-radius: 6px;
+  }
+  .country { fill: #8fbf9f; stroke: #0b1a2e; stroke-width: 0.0035; stroke-linejoin: round; }
+  .graticule {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.09);
+    stroke-width: 0.0022;
+    pointer-events: none;
+  }
+  .outline {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 0.005;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .tissot {
+    fill: rgba(255, 120, 90, 0.35);
+    stroke: #ff785a;
+    stroke-width: 0.004;
+    pointer-events: none;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 7px;
+    color: #9fb0c5;
+    font-size: 0.72rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .stats b { color: #e6edf3; font-weight: 600; }
+  table {
+    width: min(96%, 980px);
+    margin: 1.4rem auto 0;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #223349;
+    text-align: right;
+  }
+  th:first-child, td:first-child { text-align: left; color: #9fb0c5; }
+  th { font-weight: 600; letter-spacing: 0.02em; }
+  th.ours { color: #ffd166; }
+  td.best { color: #7ee0a3; font-weight: 650; }
+  .foot {
+    margin-top: 1.2rem;
+    color: #6e8098;
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+  .foot code {
+    color: #9fb0c5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .foot a { color: #9fb0c5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>COEFFICIENTS, COMPARED</h1>
+  <p class="sub">
+    Same equal-area family, three y-curves. Red circles are Tissot indicatrices
+    (identical 3° globe circles) — rounder is better.
+  </p>
+  <div class="grid" id="panels"></div>
+  <table id="metrics"></table>
+  <p class="foot">
+    ω = maximum angular distortion (Tissot) on a 5° grid, |φ| ≤ 80°, poles excluded
+    (every pole-line map degenerates there).<br>
+    Fit criterion: <code>rms/ρ(rms) + 0.75·max/ρ(max)</code> · reproduce with
+    <code>node scripts/fit-coefficients.js</code> ·
+    <a href="index.html">back to the main map</a>
+  </p>
+</main>
+<script type="module" src="src/compare.js"></script>
+</body>
+</html>
