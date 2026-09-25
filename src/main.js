@@ -10,7 +10,7 @@ import {
   planarPolygonArea,
 } from './area.js';
 import { polygonsOf } from './geo.js';
-import { countryStats } from './stats.js';
+import { countryStats, sizeComparison } from './stats.js';
 
 const esc = (s) =>
   String(s)
@@ -53,10 +53,14 @@ const countries = features
 
 const outline = `<path class="outline" d="${outlinePath()}"/>`;
 
-svg.innerHTML = graticule + countries + outline + `<path class="ghost" id="ghost" d=""/>`;
+svg.innerHTML =
+  graticule + countries + outline +
+  `<path class="ghost" id="ghost" d=""/>` +
+  `<path class="compare" id="compare-path" d=""/>`;
 
 const countryEls = [...svg.querySelectorAll('path.country')];
 const ghostEl = document.getElementById('ghost');
+const comparePathEl = document.getElementById('compare-path');
 
 // --- info card ---------------------------------------------------------------
 
@@ -67,9 +71,13 @@ const cardSub = document.getElementById('card-sub');
 const cardMerc = document.getElementById('card-merc');
 const cardHint = document.getElementById('card-hint');
 const ghostToggle = document.getElementById('ghost-toggle');
+const compareWrap = document.getElementById('card-compare');
+const compareSel = document.getElementById('compare-select');
+const compareRatio = document.getElementById('card-ratio');
 
 let hovered = null;
 let pinned = null;
+let compare = null;
 
 function updateCard() {
   const idx = hovered ?? pinned;
@@ -79,6 +87,9 @@ function updateCard() {
   }
   const s = stats[idx];
   card.hidden = false;
+  // the compare controls describe the PINNED pair — hide them while previewing
+  // a different (hovered) country
+  compareWrap.hidden = pinned === null || idx !== pinned;
   cardName.textContent = s.name;
   cardArea.textContent = `${fmtInt(s.areaKm2)} km²`;
   cardSub.textContent = `${s.worldPct.toFixed(2)}% of Earth's surface · true size on this map`;
@@ -146,20 +157,76 @@ function updateGhost() {
   ghostEl.setAttribute('d', show ? buildGhost(pinned) : '');
 }
 
+// --- two-country comparison --------------------------------------------------
+// The other country is TRANSLATED (never scaled) so its outline sits on the
+// pinned one at identical map scale — true relative size, honestly drawn.
+
+// featureToPath emits "M x y L x y ... Z"; shift every coordinate pair.
+function offsetPath(d, dx, dy) {
+  return d.replace(/([ML])(-?[\d.]+) (-?[\d.]+)/g, (_, cmd, x, y) => {
+    const nx = Math.round((Number(x) + dx) * 1e4) / 1e4;
+    const ny = Math.round((Number(y) + dy) * 1e4) / 1e4;
+    return cmd + (nx === 0 ? 0 : nx) + ' ' + (ny === 0 ? 0 : ny);
+  });
+}
+
+function rebuildCompareOptions() {
+  const items = features
+    .map((f, i) => ({ i, name: nameOf(f) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  compareSel.innerHTML =
+    `<option value="">overlay another country…</option>` +
+    items
+      .filter((o) => o.i !== pinned)
+      .map((o) => `<option value="${o.i}">${esc(o.name)}</option>`)
+      .join('');
+  compareSel.value = compare !== null && compare !== pinned ? String(compare) : '';
+}
+
+function updateCompareOverlay() {
+  if (pinned === null || compare === null || compare === pinned) {
+    comparePathEl.setAttribute('d', '');
+    compareRatio.textContent = '';
+    return;
+  }
+  const [ax, ay] = featureMapCentroid(features[pinned]);
+  const [bx, by] = featureMapCentroid(features[compare]);
+  comparePathEl.setAttribute(
+    'd',
+    offsetPath(featureToPath(features[compare]), ax - bx, by - ay),
+  );
+  compareRatio.textContent = sizeComparison(stats[pinned], stats[compare]);
+}
+
+function updateCompareUI() {
+  if (pinned !== null) rebuildCompareOptions();
+  updateCompareOverlay();
+}
+
 // --- state plumbing ----------------------------------------------------------
 
 function syncUrl() {
   const u = new URL(location.href);
   if (pinned !== null) u.searchParams.set('pin', stats[pinned].name);
   else u.searchParams.delete('pin');
+  if (pinned !== null && compare !== null && compare !== pinned) {
+    u.searchParams.set('vs', stats[compare].name);
+  } else {
+    u.searchParams.delete('vs');
+  }
   history.replaceState(null, '', u);
 }
 
 function setPinned(idx) {
   pinned = idx;
+  if (idx === null) {
+    compare = null;
+    compareSel.value = '';
+  }
   updateClasses();
   updateCard();
   updateGhost();
+  updateCompareUI();
   syncUrl();
 }
 
@@ -197,11 +264,28 @@ svg.addEventListener('click', (e) => {
 
 ghostToggle.addEventListener('change', updateGhost);
 
+compareSel.addEventListener('change', () => {
+  compare = compareSel.value === '' ? null : Number(compareSel.value);
+  updateCompareOverlay();
+  syncUrl();
+});
+
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && pinned !== null) setPinned(null);
 });
 
-// deep link: ?pin=Greenland
-const initial = findByName(new URLSearchParams(location.search).get('pin') || '');
-if (initial !== null) setPinned(initial);
-else updateCard();
+// deep links: ?pin=Greenland&vs=Russia
+const query = new URLSearchParams(location.search);
+const initial = findByName(query.get('pin') || '');
+const vsInit = findByName(query.get('vs') || '');
+if (initial !== null) {
+  setPinned(initial);
+  if (vsInit !== null && vsInit !== initial) {
+    compare = vsInit;
+    rebuildCompareOptions();
+    updateCompareOverlay();
+    syncUrl();
+  }
+} else {
+  updateCard();
+}

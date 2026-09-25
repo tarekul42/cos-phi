@@ -23,3 +23,16 @@ export function countryStats(feature, name) {
     mercFactor: featureMercatorFactor(feature),
   };
 }
+
+// "Russia is 7.9× the size of Greenland" — larger country always first, so
+// the line reads the same whichever way the pair is given.
+export function sizeComparison(a, b) {
+  const ra = a.areaKm2;
+  const rb = b.areaKm2;
+  if (!(ra > 0 && rb > 0)) return '';
+  const r = ra / rb;
+  if (Math.abs(r - 1) < 0.05) return `${a.name} and ${b.name} are about the same size`;
+  const [big, small, mult] = r >= 1 ? [a, b, r] : [b, a, 1 / r];
+  const m = mult >= 100 ? Math.round(mult) : mult.toFixed(1);
+  return `${big.name} is ${m}× the size of ${small.name}`;
+}

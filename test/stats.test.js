@@ -13,7 +13,7 @@ import {
   featureSphericalArea,
   srToKm2,
 } from '../src/area.js';
-import { countryStats } from '../src/stats.js';
+import { countryStats, sizeComparison } from '../src/stats.js';
 import { bounds } from '../src/projection.js';
 import { polygonsOf } from '../src/geo.js';
 
@@ -84,6 +84,24 @@ test('planarCentroid: unit square and a translated square', () => {
   assert.ok(Math.abs(cx - 0.5) < 1e-12 && Math.abs(cy - 0.5) < 1e-12);
   const [dx, dy] = planarCentroid(sq.map(([x, y]) => [x + 10, y - 3]));
   assert.ok(Math.abs(dx - 10.5) < 1e-12 && Math.abs(dy + 2.5) < 1e-12);
+});
+
+test('sizeComparison: larger first, honest ratio, symmetric', () => {
+  const g = countryStats(byName.get('Greenland'), 'Greenland');
+  const r = countryStats(byName.get('Russia'), 'Russia');
+  const line = sizeComparison(g, r);
+  assert.match(line, /^Russia is [0-9.]+× the size of Greenland$/);
+  const mult = r.areaKm2 / g.areaKm2;
+  assert.ok(mult > 6 && mult < 10, `Russia/Greenland ${mult}`);
+  assert.equal(line, sizeComparison(r, g), 'same line either order');
+});
+
+test('sizeComparison: near-equal areas say so', () => {
+  const line = sizeComparison(
+    { name: 'A', areaKm2: 100 },
+    { name: 'B', areaKm2: 102 },
+  );
+  assert.equal(line, 'A and B are about the same size');
 });
 
 test('featureMapCentroid: finite and inside the map bounds for every country', () => {

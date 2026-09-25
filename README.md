@@ -12,12 +12,12 @@ and there are **zero libraries**: no d3, no proj4, no map SDK.
 ```bash
 npm run serve      # static server via python3 (port 8000)
 # open http://localhost:8000             — the main map (hover, click to pin)
-# open http://localhost:8000/?pin=Greenland — deep link to a pinned country
+# open http://localhost:8000/?pin=Greenland&vs=Russia — pinned comparison deep link
 # open http://localhost:8000/compare.html — published vs our coefficients
 ```
 
 ```bash
-npm test           # 43 tests: math invariants + the equal-area proof
+npm test           # 45 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -35,7 +35,7 @@ npm test           # 43 tests: math invariants + the equal-area proof
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 110m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 43 tests across 7 files |
+| `test/` | 45 tests across 7 files |
 
 ## The math in one paragraph
 
@@ -87,6 +87,7 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       honest trade); `compare.html` shows all three maps with Tissot indicatrices
 - [x] Phase 6: interactions — hover area readouts (true km² + % of Earth),
       click-to-pin (Esc / ocean click clears, `?pin=` deep links), Mercator
-      size-comparison ghost overlay with toggle
+      size-comparison ghost overlay with toggle, two-country overlay
+      (true size, translated never scaled — `?pin=A&vs=B`, ratio line)
 
 Data: Natural Earth 110m Admin 0 countries (public domain).

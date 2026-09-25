@@ -123,6 +123,40 @@
     font-size: 0.82rem;
   }
   .card-merc b { color: #ff8fa3; font-weight: 680; }
+  .card-compare {
+    margin-top: 10px;
+    pointer-events: auto;
+  }
+  .card-compare[hidden] { display: none; }
+  .card-compare label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #9fb0c5;
+    font-size: 0.74rem;
+  }
+  .card-compare select {
+    background: #0e1a2c;
+    color: #e6edf3;
+    border: 1px solid #2a3d57;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font: inherit;
+    font-size: 0.8rem;
+  }
+  .card-ratio {
+    margin-top: 7px;
+    color: #5aa9ff;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .compare {
+    fill: rgba(90, 160, 255, 0.16);
+    stroke: #5aa9ff;
+    stroke-width: 0.006;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
   .ghostlab {
     display: flex;
     align-items: center;
@@ -163,6 +197,13 @@
       <div id="card-area" class="card-area"></div>
       <div id="card-sub" class="card-sub"></div>
       <div id="card-merc" class="card-merc"></div>
+      <div id="card-compare" class="card-compare" hidden>
+        <label>
+          overlay another country (true size, moved not scaled)
+          <select id="compare-select"></select>
+        </label>
+        <div id="card-ratio" class="card-ratio"></div>
+      </div>
       <label class="ghostlab">
         <input type="checkbox" id="ghost-toggle" checked>
         show Mercator ghost (same map width)
@@ -172,7 +213,7 @@
   </div>
   <p class="foot">
     Equal-area pseudocylindrical projection · areas verified against spherical excess
-    (<code>npm test</code>) · hover for area · click to pin ·
+    (<code>npm test</code>) · hover for area · click to pin · compare any two countries ·
     <a href="compare.html">coefficient comparison</a>
   </p>
 </main>
