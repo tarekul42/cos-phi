@@ -42,7 +42,9 @@ For the pseudocylindrical family `y = Y(θ)`, `x = (2/√3)·λ·cos θ / Y′(�
 collapses to `k·cos θ·dθ/dφ = cos φ`, which integrates to
 `sin θ = (√3/2)·sin φ`. Notably, the y-curve `Y` vanishes from the condition —
 **any** monotonic y-curve is exactly equal-area; the published Equal-Earth
-coefficients only tune _shape_ distortion, never area.
+coefficients only tune *shape* distortion, never area — which is why we were
+able to refit them ourselves against our own Tissot-ω criterion
+([`docs/MATH.md`](docs/MATH.md) §8, compare at `/compare.html`).
 Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 
 ## How "equal-area" is proven (not asserted)
@@ -72,9 +74,11 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 ## Status
 
 - [x] Projection math derived, implemented, tested
-- [x] Equal-area verified end-to-end (27 tests green)
+- [x] Equal-area verified end-to-end (34 tests green)
 - [x] Interactive SVG map with hover
-- [ ] Phase 5: refit the y-curve coefficients ourselves (distortion optimization)
+- [x] Phase 5: our own coefficients (`OURS_A`, `OURS_FIXED_ASPECT_A`) — worst-case
+      ω 109.5° → 104.1°, polar band 80.1° → 72.1°, equator held, RMS +2.8% (the
+      honest trade); `compare.html` shows all three maps with Tissot indicatrices
 - [ ] Phase 6: richer interactions (click-to-pin, area readouts, size comparison)
 
 Data: Natural Earth 110m Admin 0 countries (public domain).

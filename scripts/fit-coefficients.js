@@ -1,12 +1,21 @@
 // Fit our own y-curve coefficients for the projection family.
 //
-// Equal-area holds for ANY coefficients, so this optimizes shape only:
-// minimize the area-weighted RMS angular distortion (Tissot omega, |lat| <= 80)
-// over the free coefficients, with a hand-written Nelder-Mead.
+// Equal-area holds for ANY coefficients, so this optimizes shape only.
+//
+// Criterion: normalized blend of overall and worst-case Tissot omega
+//
+//     f = rms80 / rms80(published)  +  0.75 * max80 / max80(published)
+//
+// where rms80/max80 are area-weighted RMS and maximum angular distortion on a
+// (phi, lambda) grid, |phi| <= 80 (poles excluded: omega -> 180 deg there for
+// every pole-line projection). The two terms are normalized by the published
+// map's own values, so f < 2 beats the published coefficients; the 0.75 weight
+// is the knee of the trade-off frontier explored in Phase 5 — pushing max
+// harder wrecks rms, relaxing it buys nothing.
 //
 // Two variants:
 //   free  : A1, A2, A3 free (aspect ratio follows A1), A4 slaved to height
-//   aspect: A1 fixed to the published aspect ratio, A2, A3 free, A4 slaved
+//   fixed : A1 pinned to reproduce the published aspect, A2, A3 free, A4 slaved
 //
 // Height Y(pi/3) is pinned to the published value so all maps share a scale;
 // Y' > 0 is enforced (hard penalty) so the projection stays one-to-one.
@@ -21,13 +30,16 @@ import {
   THETA_MAX,
   TWO_OVER_SQRT3,
 } from '../src/projection.js';
-import { distortionMetrics } from '../src/distortion.js';
+import { distortionMetrics, omegaDeg } from '../src/distortion.js';
 
 const TH = THETA_MAX;
 const HEIGHT = yCurve(TH, PUBLISHED_A);
 const PUB_ASPECT = bounds(PUBLISHED_A).width / bounds(PUBLISHED_A).height;
 // A1 that reproduces the published aspect at the pinned height
 const A1_FIXED = (TWO_OVER_SQRT3 * Math.PI) / (PUB_ASPECT * HEIGHT);
+
+const COARSE = { latStep: 8, lonStep: 10 };
+const W_MAX = 0.75; // weight of the worst-case term
 
 // --- parameter packing -------------------------------------------------------
 
@@ -47,12 +59,15 @@ function minDeriv(a) {
   return m;
 }
 
+const BASE_COARSE = distortionMetrics(PUBLISHED_A, COARSE);
+
 function objective(p, mode) {
   const a = coeffsFrom(p, mode);
   const md = minDeriv(a);
   if (!(md > 0)) return 1e6 + 1e6 * Math.max(0, -md); // monotonicity penalty
-  // coarser grid inside the optimizer; final numbers use the fine default grid
-  return distortionMetrics(a, { latStep: 8, lonStep: 10 }).rmsOmegaDeg;
+  const m = distortionMetrics(a, COARSE);
+  return m.rmsOmegaDeg / BASE_COARSE.rmsOmegaDeg
+    + (W_MAX * m.maxOmegaDeg) / BASE_COARSE.maxOmegaDeg;
 }
 
 // --- hand-written Nelder-Mead ------------------------------------------------
@@ -97,26 +112,6 @@ function nelderMead(f, x0, scales, { maxIter = 3000, ftol = 1e-12, xtol = 1e-10 
       const contract = centroid.map((c, j) => c + 0.5 * (simplex[n][j] - c));
       const fc = f(contract);
       if (fc < Math.min(fr, fx[n])) { simplex[n] = contract; fx[n] = fc; }
-      else {
-        for (let i = 1; i <= n; i++) {
-          simplex[i] = simplex[i].map((v, j) => simplex[0][j] + 0.5 * (v - simplex[0][j]));
-          fx[i] = f(simplex[i]);
-        }
-      }
-    }
-  }
-  let best = 0;
-  for (let i = 1; i <= n; i++) if (fx[i] < fx[best]) best = i;
-  return { x: simplex[best], f: fx[best] };
-}
-
-// deterministic pseudo-random (LCG) for extra restarts
-function makeRng(seed = 42) {
-  let s = seed;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32);
-}
-
-// --- fit --------------------------------------------ath.min(fr, fx[n])) { simplex[n] = contract; fx[n] = fc; }
       else {
         for (let i = 1; i <= n; i++) {
           simplex[i] = simplex[i].map((v, j) => simplex[0][j] + 0.5 * (v - simplex[0][j]));
