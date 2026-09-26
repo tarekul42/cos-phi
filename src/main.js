@@ -3,6 +3,7 @@
 
 import { bounds, TWO_OVER_SQRT3 } from './projection.js';
 import { featureToPath, graticulePaths, outlinePath } from './render.js';
+import { prepareMorph } from './morph.js';
 import {
   featureMapCentroid,
   mercatorRing,
@@ -203,6 +204,52 @@ function updateCompareUI() {
   updateCompareOverlay();
 }
 
+// --- morph slider (Equal Earth <-> frame-fitted Mercator) --------------------
+// Dragging lerps every vertex between the two endpoint projections. The
+// ghost/compare overlays are fixed-projection, so they hide mid-morph.
+
+const morphSlider = document.getElementById('morph');
+const morphMetric = document.getElementById('morph-metric');
+const morphBar = document.querySelector('.morphbar');
+const morph = prepareMorph(features, { yMax: b.yMax });
+const graticuleEls = [...svg.querySelectorAll('path.graticule')];
+const outlineEl = svg.querySelector('path.outline');
+const baseCountryPaths = countryEls.map((el) => el.getAttribute('d'));
+const baseGraticulePaths = graticuleEls.map((el) => el.getAttribute('d'));
+const baseOutlinePath = outlineEl.getAttribute('d');
+
+function applyMorph(t) {
+  if (t <= 0) {
+    countryEls.forEach((el, i) => el.setAttribute('d', baseCountryPaths[i]));
+    graticuleEls.forEach((el, i) => el.setAttribute('d', baseGraticulePaths[i]));
+    outlineEl.setAttribute('d', baseOutlinePath);
+  } else {
+    countryEls.forEach((el, i) => el.setAttribute('d', morph.featurePath(i, t)));
+    graticuleEls.forEach((el, i) => el.setAttribute('d', morph.graticulePath(i, t)));
+    outlineEl.setAttribute('d', morph.outlinePath(t));
+  }
+  const on = t > 0.001;
+  svg.classList.toggle('morphing', on);
+  morphBar.classList.toggle('on', on);
+  const m = on ? morph.metrics(t) : { median: 1, max: 1 };
+  morphMetric.textContent =
+    `area scale · median ×${fmtFactor(m.median)} · worst ×${fmtFactor(m.max)}`;
+}
+
+let morphRaf = 0;
+let morphT = 0;
+function queueMorph(t) {
+  morphT = t;
+  if (morphRaf) return;
+  morphRaf = requestAnimationFrame(() => {
+    morphRaf = 0;
+    applyMorph(morphT);
+  });
+}
+
+morphSlider.addEventListener('input', () => queueMorph(morphSlider.value / 100));
+morphSlider.addEventListener('change', syncUrl);
+
 // --- state plumbing ----------------------------------------------------------
 
 function syncUrl() {
@@ -214,6 +261,9 @@ function syncUrl() {
   } else {
     u.searchParams.delete('vs');
   }
+  const morphPct = Number(morphSlider.value);
+  if (morphPct > 0) u.searchParams.set('morph', String(morphPct / 100));
+  else u.searchParams.delete('morph');
   history.replaceState(null, '', u);
 }
 
@@ -274,8 +324,14 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && pinned !== null) setPinned(null);
 });
 
-// deep links: ?pin=Greenland&vs=Russia
+// deep links: ?pin=Greenland&vs=Russia, ?morph=0.5
 const query = new URLSearchParams(location.search);
+const morphInit = parseFloat(query.get('morph'));
+if (Number.isFinite(morphInit)) {
+  const pct = morphInit > 1 ? Math.round(morphInit) : Math.round(morphInit * 100);
+  morphSlider.value = String(Math.max(0, Math.min(100, pct)));
+  applyMorph(Number(morphSlider.value) / 100);
+}
 const initial = findByName(query.get('pin') || '');
 const vsInit = findByName(query.get('vs') || '');
 if (initial !== null) {

@@ -45,47 +45,53 @@ export function featureToPath(feature, opts) {
 
 // --- graticule ---------------------------------------------------------------
 
-export function graticulePaths({
+// Geometry as lon/lat point lists — shared by the static renderer and the
+// morph (src/morph.js) so both produce byte-identical paths at t=0.
+export function graticuleLines({
   lonStep = 30,
   latStep = 30,
   samples = 90,
-  coeffs,
 } = {}) {
-  const paths = [];
+  const lines = [];
 
   // Parallels: straight horizontal lines (a property of the projection).
   for (let lat = -90 + latStep; lat < 90; lat += latStep) {
-    const y = project(lat * D2R, 0, coeffs).y;
-    const xEdge = project(lat * D2R, Math.PI, coeffs).x;
-    paths.push(`M${fmt(-xEdge)} ${fmt(-y)}L${fmt(xEdge)} ${fmt(-y)}`);
+    lines.push({ pts: [[-180, lat], [180, lat]], closed: false });
   }
 
   // Meridians: curved polylines from pole to pole.
   const latStepDeg = 180 / samples;
   for (let lon = -180; lon <= 180; lon += lonStep) {
-    let d = "";
-    for (let i = 0; i <= samples; i++) {
-      const lat = -90 + i * latStepDeg;
-      d += (i === 0 ? "M" : "L") + projectToSvg(lon, lat, coeffs);
-    }
-    paths.push(d);
+    const pts = [];
+    for (let i = 0; i <= samples; i++) pts.push([lon, -90 + i * latStepDeg]);
+    lines.push({ pts, closed: false });
   }
-  return paths;
+  return lines;
+}
+
+function linePath(line, coeffs) {
+  let d = "";
+  for (let i = 0; i < line.pts.length; i++) {
+    d += (i === 0 ? "M" : "L") + projectToSvg(line.pts[i][0], line.pts[i][1], coeffs);
+  }
+  return d + (line.closed ? "Z" : "");
+}
+
+export function graticulePaths(opts = {}) {
+  return graticuleLines(opts).map((l) => linePath(l, opts.coeffs));
 }
 
 // --- map outline (the closed oval) ------------------------------------------
 
-export function outlinePath({ samples = 180, coeffs } = {}) {
+export function outlineLine({ samples = 180 } = {}) {
   const latStep = 180 / samples;
-  let d = "";
-  let first = true;
-  const push = (lonDeg, latDeg) => {
-    d += (first ? "M" : "L") + projectToSvg(lonDeg, latDeg, coeffs);
-    first = false;
-  };
+  const pts = [];
+  for (let i = 0; i <= samples; i++) pts.push([-180, -90 + i * latStep]); // left edge up
+  pts.push([180, 90]); // top pole line
+  for (let i = samples; i >= 0; i--) pts.push([180, -90 + i * latStep]); // right edge down
+  return { pts, closed: true };
+}
 
-  for (let i = 0; i <= samples; i++) push(-180, -90 + i * latStep); // left edge up
-  push(180, 90); // top pole line
-  for (let i = samples; i >= 0; i--) push(180, -90 + i * latStep); // right edge down
-  return d + "Z"; // bottom pole line
+export function outlinePath(opts = {}) {
+  return linePath(outlineLine(opts), opts.coeffs);
 }

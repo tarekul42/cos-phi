@@ -13,11 +13,12 @@ and there are **zero libraries**: no d3, no proj4, no map SDK.
 npm run serve      # static server via python3 (port 8000)
 # open http://localhost:8000             — the main map (hover, click to pin)
 # open http://localhost:8000/?pin=Greenland&vs=Russia — pinned comparison deep link
+# open http://localhost:8000/?morph=0.5 — half-morphed toward Mercator (or drag the slider)
 # open http://localhost:8000/compare.html — published vs our coefficients
 ```
 
 ```bash
-npm test           # 45 tests: math invariants + the equal-area proof
+npm test           # 51 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -29,13 +30,14 @@ npm test           # 45 tests: math invariants + the equal-area proof
 | `src/geo.js` | GeoJSON traversal (Polygon / MultiPolygon) |
 | `src/render.js` | Projected SVG paths, graticule, map outline (coefficients pluggable) |
 | `src/distortion.js` | Tissot indicatrix + ω metrics used to fit/verify our coefficients |
-| `src/main.js` | Fetches data, mounts the SVG, wires hover/pin/ghost interactions |
+| `src/main.js` | Fetches data, mounts the SVG, wires hover/pin/ghost + morph-slider interactions |
+| `src/morph.js` | Equal Earth ⇄ Mercator morph: per-vertex endpoint lerp + live area-scale metrics |
 | `src/stats.js` | Per-country facts for the info card: true area, world share, Mercator inflation |
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 45 tests across 7 files |
+| `test/` | 51 tests across 7 files |
 
 ## The math in one paragraph
 
@@ -89,5 +91,10 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       click-to-pin (Esc / ocean click clears, `?pin=` deep links), Mercator
       size-comparison ghost overlay with toggle, two-country overlay
       (true size, translated never scaled — `?pin=A&vs=B`, ratio line)
+- [x] Phase 7: morph slider — smoothly bends the whole map into a
+      frame-fitted Mercator and back (`?morph=` deep link), with a live
+      equator-normalized area-scale readout (median ×1.00 · worst ×1.00 on
+      Equal Earth; ×1.33 · ×92 on Mercator); fixed-projection overlays hide
+      mid-morph
 
 Data: Natural Earth 50m Admin 0 countries (public domain).

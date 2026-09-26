@@ -173,6 +173,29 @@
     color: #6e8098;
     font-size: 0.7rem;
   }
+  .morphbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 0.9rem;
+    font-size: 0.8rem;
+    color: #9fb0c5;
+  }
+  .morphbar input[type="range"] {
+    flex: 0 1 340px;
+    accent-color: #5aa9ff;
+    cursor: pointer;
+  }
+  .morph-end { font-weight: 600; letter-spacing: 0.03em; }
+  .morph-metric {
+    color: #6e8098;
+    font-variant-numeric: tabular-nums;
+  }
+  .morphbar.on .morph-metric { color: #ff8fa3; }
+  .morphing .ghost,
+  .morphing .compare { display: none; }
   .foot {
     margin-top: 1.1rem;
     color: #6e8098;
@@ -211,9 +234,17 @@
       <div id="card-hint" class="card-hint"></div>
     </aside>
   </div>
+  <div class="morphbar">
+    <span class="morph-end">Equal Earth</span>
+    <input type="range" id="morph" min="0" max="100" step="1" value="0"
+           aria-label="morph between Equal Earth and Mercator">
+    <span class="morph-end">Mercator</span>
+    <span id="morph-metric" class="morph-metric">area scale · median ×1.00 · worst ×1.00</span>
+  </div>
   <p class="foot">
     Equal-area pseudocylindrical projection · areas verified against spherical excess
     (<code>npm test</code>) · hover for area · click to pin · compare any two countries ·
+    drag the slider to morph into Mercator ·
     <a href="compare.html">coefficient comparison</a>
   </p>
 </main>
