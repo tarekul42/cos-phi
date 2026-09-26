@@ -14,7 +14,7 @@ import { project } from "./projection.js";
 import { graticuleLines, outlineLine } from "./render.js";
 
 const D2R = Math.PI / 180;
-const PRECISION = 3;
+const PRECISION = 4; // must match render.js — the t=0 string-identity test
 const LAT_HARD = 89.9999; // keep Mercator y finite at the poles
 
 const fmt = (v) =>

@@ -7,7 +7,7 @@ import { polygonsOf } from "./geo.js";
 import { project } from "./projection.js";
 
 const D2R = Math.PI / 180;
-const PRECISION = 3; // 1e-3 sphere-radii ≈ 0.02% of map width — invisible
+const PRECISION = 4; // 1e-4 sphere-radii ≈ 0.002% of map width — crisp at 64× zoom
 
 const fmt = (v) =>
   (Math.round(v * 10 ** PRECISION) / 10 ** PRECISION).toString();

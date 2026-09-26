@@ -45,11 +45,15 @@
     background: #10233c;
     border-radius: 10px;
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    touch-action: none;
+    user-select: none;
   }
+  /* strokes in screen pixels: borders stay hairline-thin at any zoom */
+  svg path { vector-effect: non-scaling-stroke; }
   .country {
     fill: #8fbf9f;
     stroke: #10233c;
-    stroke-width: 0.0035;
+    stroke-width: 0.75px;
     stroke-linejoin: round;
     cursor: pointer;
     transition: fill 120ms ease;
@@ -60,29 +64,31 @@
   .country.pinned {
     fill: #ffb703;
     stroke: #ffffff;
-    stroke-width: 0.006;
+    stroke-width: 1.3px;
   }
   .ghost {
     fill: rgba(255, 80, 80, 0.14);
     stroke: #ff6b6b;
-    stroke-width: 0.0045;
-    stroke-dasharray: 0.016 0.011;
+    stroke-width: 1px;
+    stroke-dasharray: 3.5 2.4;
     stroke-linejoin: round;
     pointer-events: none;
   }
   .graticule {
     fill: none;
     stroke: rgba(255, 255, 255, 0.09);
-    stroke-width: 0.0022;
+    stroke-width: 0.5px;
     pointer-events: none;
   }
   .outline {
     fill: none;
     stroke: rgba(255, 255, 255, 0.5);
-    stroke-width: 0.005;
+    stroke-width: 1.1px;
     stroke-linejoin: round;
     pointer-events: none;
   }
+  svg.panning,
+  svg.panning .country { cursor: grabbing; }
   .card {
     position: absolute;
     top: 14px;
@@ -153,9 +159,42 @@
   .compare {
     fill: rgba(90, 160, 255, 0.16);
     stroke: #5aa9ff;
-    stroke-width: 0.006;
+    stroke-width: 1.3px;
     stroke-linejoin: round;
     pointer-events: none;
+  }
+  .zoomctl {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .zoomctl button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: rgba(9, 20, 36, 0.93);
+    color: #9fb0c5;
+    border: 1px solid #2a3d57;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 1.02rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .zoomctl button:hover { color: #ffd166; border-color: #3f5877; }
+  .zoom-level {
+    font-size: 0.7rem;
+    color: #6e8098;
+    background: rgba(9, 20, 36, 0.93);
+    border: 1px solid #2a3d57;
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-variant-numeric: tabular-nums;
   }
   .ghostlab {
     display: flex;
@@ -233,6 +272,12 @@
       </label>
       <div id="card-hint" class="card-hint"></div>
     </aside>
+    <div class="zoomctl">
+      <button id="zoom-in" aria-label="zoom in">+</button>
+      <button id="zoom-out" aria-label="zoom out">−</button>
+      <button id="zoom-reset" aria-label="reset view">⟲</button>
+      <span id="zoom-level" class="zoom-level">×1</span>
+    </div>
   </div>
   <div class="morphbar">
     <span class="morph-end">Equal Earth</span>
@@ -244,7 +289,7 @@
   <p class="foot">
     Equal-area pseudocylindrical projection · areas verified against spherical excess
     (<code>npm test</code>) · hover for area · click to pin · compare any two countries ·
-    drag the slider to morph into Mercator ·
+    scroll to zoom · drag to pan · drag the slider to morph into Mercator ·
     <a href="compare.html">coefficient comparison</a>
   </p>
 </main>

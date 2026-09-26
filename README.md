@@ -14,11 +14,12 @@ npm run serve      # static server via python3 (port 8000)
 # open http://localhost:8000             — the main map (hover, click to pin)
 # open http://localhost:8000/?pin=Greenland&vs=Russia — pinned comparison deep link
 # open http://localhost:8000/?morph=0.5 — half-morphed toward Mercator (or drag the slider)
+# open http://localhost:8000/?z=24&cx=1.557&cy=-0.03 — zoomed ×24 onto Singapore
 # open http://localhost:8000/compare.html — published vs our coefficients
 ```
 
 ```bash
-npm test           # 51 tests: math invariants + the equal-area proof
+npm test           # 55 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -32,12 +33,13 @@ npm test           # 51 tests: math invariants + the equal-area proof
 | `src/distortion.js` | Tissot indicatrix + ω metrics used to fit/verify our coefficients |
 | `src/main.js` | Fetches data, mounts the SVG, wires hover/pin/ghost + morph-slider interactions |
 | `src/morph.js` | Equal Earth ⇄ Mercator morph: per-vertex endpoint lerp + live area-scale metrics |
+| `src/view.js` | Zoom/pan viewport math: viewBox from `{cx, cy, w}`, cursor-anchored zoom, clamping |
 | `src/stats.js` | Per-country facts for the info card: true area, world share, Mercator inflation |
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 51 tests across 7 files |
+| `test/` | 55 tests across 8 files |
 
 ## The math in one paragraph
 
@@ -96,5 +98,8 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       equator-normalized area-scale readout (median ×1.00 · worst ×1.00 on
       Equal Earth; ×1.33 · ×92 on Mercator); fixed-projection overlays hide
       mid-morph
+- [x] Phase 8: zoom & pan — wheel zoom to cursor (×64 max), drag to pan,
+      double-click / +−⟲ buttons, live zoom badge, `?z=&cx=&cy=` deep links;
+      strokes are non-scaling so borders stay hairline-crisp at any zoom
 
 Data: Natural Earth 50m Admin 0 countries (public domain).
