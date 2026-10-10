@@ -252,6 +252,14 @@
 <main>
   <h1>EQUAL EARTH</h1>
   <p class="sub">Every country at its true relative area — projection derived from first principles, no libraries.</p>
+  <div id="searchwrap" class="searchwrap">
+    <input id="search" type="text" placeholder="jump to a country…" aria-label="search countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="search-list">
+    <ul id="search-list" class="search-list" role="listbox" hidden></ul>
+  </div>
+  <div id="searchwrap" class="searchwrap">
+    <input id="search" type="text" placeholder="jump to a country…" aria-label="search countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="search-list">
+    <ul id="search-list" class="search-list" role="listbox" hidden></ul>
+  </div>
   <div class="mapwrap">
     <svg id="map" role="img" aria-label="Equal Earth world map"></svg>
     <aside id="card" class="card" hidden>
@@ -288,8 +296,8 @@
   </div>
   <p class="foot">
     Equal-area pseudocylindrical projection · areas verified against spherical excess
-    (<code>npm test</code>) · hover for area · click to pin · compare any two countries ·
-    scroll to zoom · drag to pan · drag the slider to morph into Mercator ·
+    (<code>npm test</code>) · search to jump to a country · hover for area · click to pin ·
+    compare any two countries · scroll to zoom · drag to pan · drag the slider to morph into Mercator ·
     <a href="compare.html">coefficient comparison</a>
   </p>
 </main>

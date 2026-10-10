@@ -4,6 +4,8 @@ import { test } from "node:test";
 
 import {
   densifyRing,
+  featureMapBounds,
+  featureMapCentroid,
   featurePlanarArea,
   featureSphericalArea,
   planarPolygonArea,
@@ -140,4 +142,30 @@ test("absolute areas match published country areas within 8%", () => {
     );
     assert.ok(err < 0.08, `${name}: ${(err * 100).toFixed(1)}% off`);
   }
+});
+
+test("featureMapBounds contains the centroid and matches known extents", () => {
+  const f = gj.features.find((ft) => (ft.properties.ADMIN || ft.properties.NAME) === "Gabon");
+  const bb = featureMapBounds(f);
+  const [cx, cy] = featureMapCentroid(f);
+  assert.ok(bb.minX <= cx && cx <= bb.maxX, `x ${bb.minX}..${bb.maxX} vs ${cx}`);
+  assert.ok(bb.minY <= cy && cy <= bb.maxY, `y ${bb.minY}..${bb.maxY} vs ${cy}`);
+  // Gabon spans ~5° of longitude and ~8° of latitude (~0.09 / 0.13 map units)
+  assert.ok(bb.w > 0.07 && bb.w < 0.12, `w ${bb.w}`);
+  assert.ok(bb.h > 0.1 && bb.h < 0.15, `h ${bb.h}`);
+  // SVG y: Gabon straddles the equator
+  assert.ok(Math.abs(bb.cy) < 0.05, `cy ${bb.cy}`);
+});
+
+test("featureMapBounds frames the main mass of an antimeridian-crossing feature (Fiji)", () => {
+  const f = gj.features.find((ft) => (ft.properties.ADMIN || ft.properties.NAME) === "Fiji");
+  const bb = featureMapBounds(f);
+  const [cx, cy] = featureMapCentroid(f);
+  // frames Viti Levu's group, not the whole world width (Fiji is split into
+  // 21 polygons on both sides of ±180 — a union would span 5.31 map units).
+  // At 18° south the parallels shrink, so its ~1.4°×1° box is ~0.022×0.019.
+  assert.ok(bb.w > 0.01 && bb.w < 0.05, `w ${bb.w} (frames the main mass)`);
+  assert.ok(bb.h > 0.01 && bb.h < 0.05, `h ${bb.h}`);
+  assert.ok(bb.minX <= cx && cx <= bb.maxX, `x ${bb.minX}..${bb.maxX} vs ${cx}`);
+  assert.ok(bb.minY <= cy && cy <= bb.maxY, `y ${bb.minY}..${bb.maxY} vs ${cy}`);
 });

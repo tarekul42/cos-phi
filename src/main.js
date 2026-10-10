@@ -6,6 +6,7 @@ import { featureToPath, graticulePaths, outlinePath } from './render.js';
 import { prepareMorph } from './morph.js';
 import { MAX_ZOOM, clampView, screenToMap, viewBoxOf, zoomView } from './view.js';
 import {
+  featureMapBounds,
   featureMapCentroid,
   mercatorRing,
   planarCentroid,
@@ -389,6 +390,113 @@ svg.addEventListener('dblclick', (e) => {
   scheduleUrlSync();
 });
 
+// --- search + fly-to ----------------------------------------------------------
+// Type a country, pick it: the view frames it and pins it (card + ghost).
+// Init reads ?q= the same way, without animation.
+
+const searchInput = document.getElementById('search');
+const searchList = document.getElementById('search-list');
+let searchHits = [];
+let searchActive = -1;
+
+const normName = (s) =>
+  s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+function closeSearchList() {
+  searchList.hidden = true;
+  searchList.innerHTML = '';
+  searchHits = [];
+  searchActive = -1;
+}
+
+function renderSearchList() {
+  const q = searchInput.value;
+  if (!q.trim()) {
+    closeSearchList();
+    return;
+  }
+  const nq = normName(q);
+  const scored = [];
+  for (let i = 0; i < stats.length; i++) {
+    const n = normName(stats[i].name);
+    const rank = n.startsWith(nq) ? 0 : n.includes(nq) ? 1 : -1;
+    if (rank >= 0) scored.push([rank, stats[i].name, i]);
+  }
+  scored.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+  searchHits = scored.slice(0, 8).map(([, , i]) => i);
+  searchActive = searchHits.length ? 0 : -1;
+  searchList.innerHTML = searchHits.length
+    ? searchHits
+        .map(
+          (i, n) =>
+            `<li role="option" data-n="${n}" aria-selected="${n === 0}" class="${n === 0 ? 'sel' : ''}">${esc(stats[i].name)}</li>`,
+        )
+        .join('')
+    : '<li class="nomatch">no match</li>';
+  searchList.hidden = false;
+}
+
+// Target view that frames a bounding box with a margin.
+function frameBounds(bb) {
+  const margin = 1.15;
+  const wantW = Math.max(bb.w * margin, bb.h * margin * aspect);
+  const w = Math.min(world.width, Math.max(world.width / MAX_ZOOM, wantW));
+  // view space is SVG (y down); bounds are map space (y north)
+  return clampView({ cx: bb.cx, cy: -bb.cy, w }, world, aspect);
+}
+
+function flyTo(idx, animated) {
+  const target = frameBounds(featureMapBounds(features[idx]));
+  if (animated) {
+    animateTo(target, 260);
+  } else {
+    cancelZoomAnim();
+    view = target;
+    applyView();
+  }
+}
+
+searchInput.addEventListener('input', renderSearchList);
+
+searchInput.addEventListener('keydown', (e) => {
+  if (searchList.hidden) return;
+  const n = searchHits.length;
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && n > 0) {
+    e.preventDefault();
+    searchActive = (searchActive + (e.key === 'ArrowDown' ? 1 : -1) + n) % n;
+    [...searchList.children].forEach((li, k) => {
+      const on = k === searchActive && k < n;
+      li.classList.toggle('sel', on);
+      li.setAttribute('aria-selected', String(on));
+    });
+  } else if (e.key === 'Enter' && searchActive >= 0) {
+    e.preventDefault();
+    const idx = searchHits[searchActive];
+    closeSearchList();
+    searchInput.value = stats[idx].name;
+    setPinned(idx);
+    flyTo(idx, true);
+    syncUrl();
+  } else if (e.key === 'Escape') {
+    closeSearchList();
+  }
+});
+
+searchList.addEventListener('click', (e) => {
+  const li = e.target.closest('li[data-n]');
+  if (!li) return;
+  const idx = searchHits[Number(li.dataset.n)];
+  closeSearchList();
+  searchInput.value = stats[idx].name;
+  setPinned(idx);
+  flyTo(idx, true);
+  syncUrl();
+});
+
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest?.('#searchwrap')) closeSearchList();
+});
+
 // --- state plumbing ----------------------------------------------------------
 
 function syncUrl() {
@@ -400,6 +508,8 @@ function syncUrl() {
   } else {
     u.searchParams.delete('vs');
   }
+  // ?q= is a search alias for ?pin= — normalize it away once applied
+  u.searchParams.delete('q');
   const morphPct = Number(morphSlider.value);
   if (morphPct > 0) u.searchParams.set('morph', String(morphPct / 100));
   else u.searchParams.delete('morph');
@@ -515,4 +625,13 @@ if (initial !== null) {
   }
 } else {
   updateCard();
+}
+// ?q=Singapore — search-style deep link: pin and frame, no animation
+const qName = query.get('q') || '';
+const qIdx = findByName(qName);
+if (qIdx !== null) {
+  searchInput.value = stats[qIdx].name;
+  setPinned(qIdx);
+  flyTo(qIdx, false);
+  syncUrl();
 }

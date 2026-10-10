@@ -238,6 +238,47 @@ export function featureMapCentroid(feature, maxDeg = 1) {
   return best ? planarCentroid(best) : [0, 0];
 }
 
+// Map-space bounding box of a feature (projection space, positive north like
+// featureMapCentroid), taken from its LARGEST exterior ring — the frame
+// search/fly-to should jump to. Unioning every polygon instead would make any
+// antimeridian-straddling or far-flung feature (Fiji, Russia, Antarctica)
+// span the whole world width, since its islands sit at both ±180 edges.
+export function featureMapBounds(feature, maxDeg = 1) {
+  let best = null;
+  let bestArea = 0;
+  for (const rings of polygonsOf(feature.geometry)) {
+    const pts = projectRing(rings[0], maxDeg);
+    const a = Math.abs(planarPolygonArea(pts));
+    if (a > bestArea) {
+      bestArea = a;
+      best = pts;
+    }
+  }
+  if (!best) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0, cx: 0, cy: 0, w: 0, h: 0 };
+  }
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const [x, y] of best) {
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+    w: maxX - minX,
+    h: maxY - minY,
+  };
+}
+
 // --- Mercator comparison -----------------------------------------------------
 //
 // The classic "lies about size" yardstick: x = lambda,

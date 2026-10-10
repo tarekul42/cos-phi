@@ -15,11 +15,12 @@ npm run serve      # static server via python3 (port 8000)
 # open http://localhost:8000/?pin=Greenland&vs=Russia — pinned comparison deep link
 # open http://localhost:8000/?morph=0.5 — half-morphed toward Mercator (or drag the slider)
 # open http://localhost:8000/?z=24&cx=1.557&cy=-0.03 — zoomed ×24 onto Singapore
+# open http://localhost:8000/?q=Vatican — search deep link: pin + frame (or type in the box)
 # open http://localhost:8000/compare.html — published vs our coefficients
 ```
 
 ```bash
-npm test           # 55 tests: math invariants + the equal-area proof
+npm test           # 57 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -39,7 +40,7 @@ npm test           # 55 tests: math invariants + the equal-area proof
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 55 tests across 8 files |
+| `test/` | 57 tests across 8 files |
 
 ## The math in one paragraph
 
@@ -101,5 +102,10 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
 - [x] Phase 8: zoom & pan — wheel zoom to cursor (×64 max), drag to pan,
       double-click / +−⟲ buttons, live zoom badge, `?z=&cx=&cy=` deep links;
       strokes are non-scaling so borders stay hairline-crisp at any zoom
+- [x] Phase 9: country search — type to filter (diacritic-insensitive),
+      arrow-key navigation, Enter/clicks fly the view to the country's
+      bounding box and pin it (`?q=`, normalized to `?pin=` on sync); frames
+      the largest ring so antimeridian-crossers (Fiji, Russia) land on their
+      main mass, and Vatican clamps cleanly at ×64
 
 Data: Natural Earth 50m Admin 0 countries (public domain).
