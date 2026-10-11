@@ -21,7 +21,7 @@ npm run serve      # static server via python3 (port 8000)
 ```
 
 ```bash
-npm test           # 62 tests: math invariants + the equal-area proof
+npm test           # 68 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -39,10 +39,11 @@ npm test           # 62 tests: math invariants + the equal-area proof
 | `src/stats.js` | Per-country facts for the info card: true area, world share, Mercator inflation |
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `src/globe.js` + `globe.html` + `src/globe-math.js` | Rotating 3D orthographic Earth on canvas: own rotation math, limb clipping, hover/pin card |
+| `src/tissot.js` | Tissot indicatrices as true 5° globe circles, morph-aware (equal-area blobs become Mercator's polar sausages) |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 62 tests across 9 files |
+| `test/` | 68 tests across 10 files |
 
 ## The math in one paragraph
 
@@ -113,5 +114,9 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       math (no libraries), drag to rotate, optional auto-rotate (default off),
       painter's-algorithm countries with limb clipping, hover/pin with the
       same true-area card floating near the cursor (`?pin=`, `?rot=` init-only)
+- [x] Phase 11: Tissot indicatrices — toggleable overlay of true 5° globe
+      circles (`?tissot=1`); equal-area blobs on Equal Earth, morph slider
+      inflates the polar rows into Mercator's sausages live. Also fixed the
+      duplicated search box and added its missing CSS from Phase 9
 
 Data: Natural Earth 50m Admin 0 countries (public domain).

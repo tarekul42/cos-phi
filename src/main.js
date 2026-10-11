@@ -4,6 +4,7 @@
 import { bounds, TWO_OVER_SQRT3 } from './projection.js';
 import { featureToPath, graticulePaths, outlinePath } from './render.js';
 import { prepareMorph } from './morph.js';
+import { prepareTissot } from './tissot.js';
 import { MAX_ZOOM, clampView, screenToMap, viewBoxOf, zoomView } from './view.js';
 import {
   featureMapBounds,
@@ -58,12 +59,14 @@ const outline = `<path class="outline" d="${outlinePath()}"/>`;
 
 svg.innerHTML =
   graticule + countries + outline +
+  `<path class="tissot" id="tissot-path" d=""/>` +
   `<path class="ghost" id="ghost" d=""/>` +
   `<path class="compare" id="compare-path" d=""/>`;
 
 const countryEls = [...svg.querySelectorAll('path.country')];
 const ghostEl = document.getElementById('ghost');
 const comparePathEl = document.getElementById('compare-path');
+const tissotEl = document.getElementById('tissot-path');
 
 // --- info card ---------------------------------------------------------------
 
@@ -214,6 +217,8 @@ const morphSlider = document.getElementById('morph');
 const morphMetric = document.getElementById('morph-metric');
 const morphBar = document.querySelector('.morphbar');
 const morph = prepareMorph(features, { yMax: b.yMax });
+const tissot = prepareTissot({ yMax: b.yMax });
+const tissotToggle = document.getElementById('tissot-toggle');
 const graticuleEls = [...svg.querySelectorAll('path.graticule')];
 const outlineEl = svg.querySelector('path.outline');
 const baseCountryPaths = countryEls.map((el) => el.getAttribute('d'));
@@ -230,6 +235,7 @@ function applyMorph(t) {
     graticuleEls.forEach((el, i) => el.setAttribute('d', morph.graticulePath(i, t)));
     outlineEl.setAttribute('d', morph.outlinePath(t));
   }
+  if (tissotToggle.checked) tissotEl.setAttribute('d', tissot.paths(t));
   const on = t > 0.001;
   svg.classList.toggle('morphing', on);
   morphBar.classList.toggle('on', on);
@@ -513,6 +519,8 @@ function syncUrl() {
   const morphPct = Number(morphSlider.value);
   if (morphPct > 0) u.searchParams.set('morph', String(morphPct / 100));
   else u.searchParams.delete('morph');
+  if (tissotToggle.checked) u.searchParams.set('tissot', '1');
+  else u.searchParams.delete('tissot');
   const z = b.width / view.w;
   if (z > 1.001) {
     u.searchParams.set('z', z.toFixed(3));
@@ -580,6 +588,11 @@ svg.addEventListener('click', (e) => {
 
 ghostToggle.addEventListener('change', updateGhost);
 
+tissotToggle.addEventListener('change', () => {
+  tissotEl.setAttribute('d', tissotToggle.checked ? tissot.paths(morphT) : '');
+  syncUrl();
+});
+
 compareSel.addEventListener('change', () => {
   compare = compareSel.value === '' ? null : Number(compareSel.value);
   updateCompareOverlay();
@@ -590,8 +603,13 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && pinned !== null) setPinned(null);
 });
 
-// deep links: ?pin=Greenland&vs=Russia, ?morph=0.5, ?z=8&cx=1.2&cy=-0.4
+// deep links: ?pin=Greenland&vs=Russia, ?morph=0.5, ?z=8&cx=1.2&cy=-0.4,
+// ?tissot=1 (checkbox first so a combined ?morph=&tissot= paints correctly)
 const query = new URLSearchParams(location.search);
+if (query.get('tissot') === '1') {
+  tissotToggle.checked = true;
+  tissotEl.setAttribute('d', tissot.paths(0));
+}
 const zInit = parseFloat(query.get('z'));
 if (Number.isFinite(zInit) && zInit >= 1) {
   const cx = parseFloat(query.get('cx'));

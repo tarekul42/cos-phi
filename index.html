@@ -34,6 +34,57 @@
     color: #9fb0c5;
     font-size: clamp(0.85rem, 1.6vw, 1rem);
   }
+  .searchwrap {
+    position: relative;
+    width: min(320px, 86%);
+    margin: 0 auto 1rem;
+  }
+  #search {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(9, 20, 36, 0.93);
+    color: #e6edf3;
+    border: 1px solid #2a3d57;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.88rem;
+  }
+  #search:focus {
+    outline: none;
+    border-color: #5aa9ff;
+  }
+  .search-list {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    text-align: left;
+    background: rgba(9, 20, 36, 0.97);
+    border: 1px solid #2a3d57;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  .search-list[hidden] { display: none; }
+  .search-list li {
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    color: #e6edf3;
+    cursor: pointer;
+  }
+  .search-list li.sel,
+  .search-list li:hover {
+    background: #1c3350;
+    color: #ffd166;
+  }
+  .search-list li.nomatch {
+    color: #6e8098;
+    cursor: default;
+  }
   .mapwrap {
     position: relative;
     width: 100%;
@@ -163,6 +214,13 @@
     stroke-linejoin: round;
     pointer-events: none;
   }
+  .tissot {
+    fill: rgba(255, 120, 90, 0.22);
+    stroke: #ff785a;
+    stroke-width: 1px;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
   .zoomctl {
     position: absolute;
     top: 14px;
@@ -233,6 +291,16 @@
     font-variant-numeric: tabular-nums;
   }
   .morphbar.on .morph-metric { color: #ff8fa3; }
+  .tissotlab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #9fb0c5;
+    font-size: 0.78rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tissotlab input { accent-color: #ff785a; cursor: pointer; }
   .morphing .ghost,
   .morphing .compare { display: none; }
   .foot {
@@ -252,10 +320,6 @@
 <main>
   <h1>EQUAL EARTH</h1>
   <p class="sub">Every country at its true relative area — projection derived from first principles, no libraries.</p>
-  <div id="searchwrap" class="searchwrap">
-    <input id="search" type="text" placeholder="jump to a country…" aria-label="search countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="search-list">
-    <ul id="search-list" class="search-list" role="listbox" hidden></ul>
-  </div>
   <div id="searchwrap" class="searchwrap">
     <input id="search" type="text" placeholder="jump to a country…" aria-label="search countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="search-list">
     <ul id="search-list" class="search-list" role="listbox" hidden></ul>
@@ -293,11 +357,16 @@
            aria-label="morph between Equal Earth and Mercator">
     <span class="morph-end">Mercator</span>
     <span id="morph-metric" class="morph-metric">area scale · median ×1.00 · worst ×1.00</span>
+    <label class="tissotlab">
+      <input type="checkbox" id="tissot-toggle">
+      Tissot indicatrices
+    </label>
   </div>
   <p class="foot">
     Equal-area pseudocylindrical projection · areas verified against spherical excess
     (<code>npm test</code>) · search to jump to a country · hover for area · click to pin ·
     compare any two countries · scroll to zoom · drag to pan · drag the slider to morph into Mercator ·
+    toggle Tissot indicatrices to watch equal circles lie ·
     <a href="compare.html">coefficient comparison</a> · <a href="globe.html">3D globe</a>
   </p>
 </main>
