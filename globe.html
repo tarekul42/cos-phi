@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equal Earth — the Earth in 3D</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #0e1420;
+    color: #e6edf3;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main {
+    width: min(96vw, 860px);
+    margin: 0 auto;
+    padding: 2rem 0 1.4rem;
+    text-align: center;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    letter-spacing: 0.04em;
+    font-weight: 650;
+  }
+  .sub {
+    margin: 0.5rem 0 1.2rem;
+    color: #9fb0c5;
+    font-size: clamp(0.85rem, 1.6vw, 1rem);
+  }
+  #globewrap {
+    position: relative;
+    width: 100%;
+    background: #10233c;
+    border-radius: 10px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    margin: 0 auto;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+  canvas.grabbing { cursor: grabbing; }
+  .globecard {
+    position: absolute;
+    z-index: 5;
+    min-width: 235px;
+    max-width: 300px;
+    padding: 12px 15px;
+    text-align: left;
+    background: rgba(9, 20, 36, 0.93);
+    border: 1px solid #2a3d57;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+  .globecard[hidden] { display: none; }
+  .gcard-name {
+    font-size: 1.02rem;
+    font-weight: 680;
+    letter-spacing: 0.04em;
+    color: #ffd166;
+  }
+  .gcard-area {
+    margin-top: 5px;
+    font-size: 1.45rem;
+    font-weight: 680;
+    color: #8fbf9f;
+    font-variant-numeric: tabular-nums;
+  }
+  .gcard-sub {
+    margin-top: 1px;
+    color: #9fb0c5;
+    font-size: 0.78rem;
+  }
+  .gcard-merc {
+    margin-top: 8px;
+    color: #e6edf3;
+    font-size: 0.82rem;
+  }
+  .gcard-merc b { color: #ff8fa3; font-weight: 680; }
+  .gcard-hint {
+    margin-top: 8px;
+    color: #6e8098;
+    font-size: 0.7rem;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 0.9rem;
+    color: #9fb0c5;
+    font-size: 0.82rem;
+  }
+  .controls label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+  }
+  .controls input { accent-color: #5aa9ff; cursor: pointer; }
+  .controls button {
+    background: rgba(9, 20, 36, 0.93);
+    color: #9fb0c5;
+    border: 1px solid #2a3d57;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .controls button:hover { color: #ffd166; border-color: #3f5877; }
+  .controls a { color: #9fb0c5; }
+  .foot {
+    margin-top: 1.1rem;
+    color: #6e8098;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .foot code {
+    color: #9fb0c5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .foot a { color: #9fb0c5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EARTH, IN 3D</h1>
+  <p class="sub">The same countries, on the sphere itself — drag to rotate. Areas here are the ground truth the flat map preserves.</p>
+  <div id="globewrap">
+    <canvas id="globe" role="img" aria-label="Rotating 3D Earth globe"></canvas>
+    <aside id="gcard" class="globecard" hidden>
+      <div id="gcard-name" class="gcard-name"></div>
+      <div id="gcard-area" class="gcard-area"></div>
+      <div id="gcard-sub" class="gcard-sub"></div>
+      <div id="gcard-merc" class="gcard-merc"></div>
+      <div id="gcard-hint" class="gcard-hint"></div>
+    </aside>
+  </div>
+  <div class="controls">
+    <label>
+      <input type="checkbox" id="spin-toggle">
+      auto-rotate
+    </label>
+    <button id="reset-view">reset view</button>
+    <a href="index.html">back to the flat map</a>
+  </div>
+  <p class="foot">
+    Orthographic projection, derived from first principles · same country data and
+    area numbers as the flat map (<code>npm test</code>)
+  </p>
+</main>
+<script type="module" src="src/globe.js"></script>
+</body>
+</html>
