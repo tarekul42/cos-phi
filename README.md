@@ -22,7 +22,7 @@ npm run serve      # static server via python3 (port 8000)
 ```
 
 ```bash
-npm test           # 73 tests: math invariants + the equal-area proof
+npm test           # 78 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -41,11 +41,12 @@ npm test           # 73 tests: math invariants + the equal-area proof
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `src/globe.js` + `globe.html` + `src/globe-math.js` | Rotating 3D orthographic Earth on canvas: own rotation math, limb clipping, hover/pin card |
 | `src/tissot.js` | Tissot indicatrices as true 5° globe circles, morph-aware (equal-area blobs become Mercator's polar sausages) |
+| `src/export.js` | Standalone SVG export: pure string builder (inlined styles, ocean rect, state-carrying title/filename) + Blob download wired in `main.js` |
 | `src/contrast-projections.js` + `gallery.html` | Mercator/Robinson/Winkel tripel (published formulas, measured not derived) + the 4-panel honesty gallery |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 73 tests across 11 files |
+| `test/` | 78 tests across 12 files |
 
 ## The math in one paragraph
 
@@ -126,5 +127,11 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       circles through its projector and reports the measured area spread:
       Equal Earth ×1.00–×1.00, Robinson ×1.00–×2.03, Winkel ×1.00–×2.35,
       Mercator ×1.00–×15.78. `render.js` gained a pluggable `projector` opt
+      so any (lonDeg, latDeg)→{x,y} renders through the same pipeline
+- [x] Phase 13: SVG export — ⬇ button beside the zoom controls snapshots the
+      live view (zoom/pan/morph/pin/ghost/compare/Tissot state) into one
+      standalone SVG: styles inlined, ocean baked in as a full-viewBox rect,
+      hairline strokes kept via non-scaling-stroke, metadata title + filename
+      that encodes pin and morph state (`equal-earth-greenland-morph42.svg`)
 
 Data: Natural Earth 50m Admin 0 countries (public domain).

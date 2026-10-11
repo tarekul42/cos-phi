@@ -1,6 +1,7 @@
 // Entry point: fetch country data, project everything, mount one SVG, wire
 // Phase 6 interactions — hover area readouts, click-to-pin, Mercator ghost.
 
+import { exportFilename, svgExportString } from './export.js';
 import { bounds, TWO_OVER_SQRT3 } from './projection.js';
 import { featureToPath, graticulePaths, outlinePath } from './render.js';
 import { prepareMorph } from './morph.js';
@@ -321,6 +322,45 @@ document.getElementById('zoom-out').addEventListener('click', () => zoomBy(1 / 1
 document.getElementById('zoom-reset').addEventListener('click', () =>
   animateTo({ cx: 0, cy: 0, w: b.width }),
 );
+
+// --- SVG export ---------------------------------------------------------------
+// Snapshot the LIVE svg (viewBox = zoom/pan, every path's current d = morph/
+// pin/ghost/compare/tissot state) into a standalone SVG document: styles
+// inlined, ocean background baked in, a title that survives file managers.
+// The builder is pure (src/export.js) so the browser only wires the Blob.
+
+document.getElementById('export-svg').addEventListener('click', () => {
+  const morphing = svg.classList.contains('morphing');
+  const clone = svg.cloneNode(true);
+  // mid-morph the page hides ghost/compare via .morphing CSS — the export has
+  // no page stylesheet, so clear those stale d's here instead
+  if (morphing) {
+    clone.querySelector('#ghost').setAttribute('d', '');
+    clone.querySelector('#compare-path').setAttribute('d', '');
+  }
+  const z = b.width / view.w;
+  const bits = ['Equal Earth'];
+  if (pinned !== null) bits.push(stats[pinned].name);
+  if (compare !== null && compare !== pinned && !morphing) {
+    bits.push(`vs ${stats[compare].name}`);
+  }
+  if (morphT > 0.001) bits.push(`morph ${(morphT * 100).toFixed(0)}%`);
+  bits.push(`zoom ×${z >= 10 ? Math.round(z) : Math.round(z * 10) / 10}`);
+  const doc = svgExportString({
+    viewBox: svg.getAttribute('viewBox'),
+    body: clone.innerHTML,
+    title: bits.join(' · '),
+  });
+  const url = URL.createObjectURL(new Blob([doc], { type: 'image/svg+xml' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = exportFilename({
+    pinned: pinned !== null ? stats[pinned].name : null,
+    morphPct: morphT > 0.001 ? morphT * 100 : 0,
+  });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 
 svg.addEventListener(
   'wheel',
