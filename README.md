@@ -18,10 +18,11 @@ npm run serve      # static server via python3 (port 8000)
 # open http://localhost:8000/?q=Vatican — search deep link: pin + frame (or type in the box)
 # open http://localhost:8000/compare.html — published vs our coefficients
 # open http://localhost:8000/globe.html — the same countries on a rotating 3D Earth
+# open http://localhost:8000/gallery.html — Equal Earth vs Winkel/Robinson/Mercator, one honesty test
 ```
 
 ```bash
-npm test           # 68 tests: math invariants + the equal-area proof
+npm test           # 73 tests: math invariants + the equal-area proof
 ```
 
 ## What's inside
@@ -40,10 +41,11 @@ npm test           # 68 tests: math invariants + the equal-area proof
 | `src/compare.js` + `compare.html` | Side-by-side: published vs our coefficients with Tissot circles + metrics |
 | `src/globe.js` + `globe.html` + `src/globe-math.js` | Rotating 3D orthographic Earth on canvas: own rotation math, limb clipping, hover/pin card |
 | `src/tissot.js` | Tissot indicatrices as true 5° globe circles, morph-aware (equal-area blobs become Mercator's polar sausages) |
+| `src/contrast-projections.js` + `gallery.html` | Mercator/Robinson/Winkel tripel (published formulas, measured not derived) + the 4-panel honesty gallery |
 | `scripts/fit-coefficients.js` | Deterministic Nelder–Mead refit of the y-curve (`node scripts/fit-coefficients.js`) |
 | `docs/MATH.md` | Full derivation from the equal-area condition down to the code (§8: our coefficients) |
 | `data/world.geojson` | Natural Earth 50m countries (public domain), `data/download.sh` refetches it |
-| `test/` | 68 tests across 10 files |
+| `test/` | 73 tests across 11 files |
 
 ## The math in one paragraph
 
@@ -118,5 +120,11 @@ Full derivation with all steps: [`docs/MATH.md`](docs/MATH.md).
       circles (`?tissot=1`); equal-area blobs on Equal Earth, morph slider
       inflates the polar rows into Mercator's sausages live. Also fixed the
       duplicated search box and added its missing CSS from Phase 9
+- [x] Phase 12: four-map gallery — Mercator, Robinson, and Winkel tripel
+      (published formulas, coded only so our harness can measure them) beside
+      Equal Earth; each panel runs the same countries and the same 5° globe
+      circles through its projector and reports the measured area spread:
+      Equal Earth ×1.00–×1.00, Robinson ×1.00–×2.03, Winkel ×1.00–×2.35,
+      Mercator ×1.00–×15.78. `render.js` gained a pluggable `projector` opt
 
 Data: Natural Earth 50m Admin 0 countries (public domain).

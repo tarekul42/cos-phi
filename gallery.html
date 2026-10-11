@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Equal Earth — four maps, one test</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #0e1420;
+        color: #e6edf3;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        width: min(97vw, 1500px);
+        margin: 0 auto;
+        padding: 1.6rem 0 2rem;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+        letter-spacing: 0.04em;
+        font-weight: 650;
+      }
+      .sub {
+        margin: 0.45rem 0 1.2rem;
+        color: #9fb0c5;
+        font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        align-items: start;
+        gap: 14px;
+      }
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel {
+        background: #10233c;
+        border-radius: 10px;
+        padding: 10px 10px 8px;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+      }
+      .panel h2 {
+        margin: 2px 0 8px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+      .panel.ours h2 {
+        color: #ffd166;
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #0b1a2e;
+        border-radius: 6px;
+      }
+      .country {
+        fill: #8fbf9f;
+        stroke: #0b1a2e;
+        stroke-width: 0.0035;
+        stroke-linejoin: round;
+      }
+      .graticule {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.09);
+        stroke-width: 0.0022;
+        pointer-events: none;
+      }
+      .outline {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.5);
+        stroke-width: 0.005;
+        stroke-linejoin: round;
+        pointer-events: none;
+      }
+      .tissot {
+        fill: rgba(255, 120, 90, 0.35);
+        stroke: #ff785a;
+        stroke-width: 0.004;
+        pointer-events: none;
+      }
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 7px;
+        color: #9fb0c5;
+        font-size: 0.72rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .stats b {
+        color: #e6edf3;
+        font-weight: 600;
+      }
+      .stats .good {
+        color: #7ee0a3;
+        font-weight: 650;
+      }
+      .stats .bad {
+        color: #ff8fa3;
+      }
+      .foot {
+        margin-top: 1.2rem;
+        color: #6e8098;
+        font-size: 0.78rem;
+        line-height: 1.6;
+      }
+      .foot code {
+        color: #9fb0c5;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .foot a {
+        color: #9fb0c5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>FOUR MAPS, ONE TEST</h1>
+      <p class="sub">
+        The same countries and the same red 5° globe circles on four famous
+        projections. Only an equal-area map keeps every circle the same size.
+      </p>
+      <div class="grid" id="panels"></div>
+      <p class="foot">
+        Circle areas are measured live: every indicatrix is a true 5° globe
+        circle, and its plotted area is compared to the equator's. Equal
+        circles must plot equal — Equal Earth holds ×1.00–×1.00 by
+        construction; Winkel tripel and Robinson are honest compromises;
+        Mercator inflates by <code>sec²φ</code> — Greenland's cameo as a
+        continent.<br />
+        Robinson/Winkel formulas are the published ones (Snyder, USGS PP 1453) —
+        measured, not derived — · reproduce the numbers with
+        <code>node --test test/contrast-projections.test.js</code> ·
+        <a href="index.html">back to the main map</a> ·
+        <a href="compare.html">coefficient comparison</a>
+      </p>
+    </main>
+    <script type="module" src="src/gallery.js"></script>
+  </body>
+</html>

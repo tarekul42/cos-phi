@@ -12,20 +12,25 @@ const PRECISION = 4; // 1e-4 sphere-radii ≈ 0.002% of map width — crisp at 6
 const fmt = (v) =>
   (Math.round(v * 10 ** PRECISION) / 10 ** PRECISION).toString();
 
-function projectToSvg(lonDeg, latDeg, a) {
-  const { x, y } = project(latDeg * D2R, lonDeg * D2R, a);
+// opts.coeffs selects a member of the Equal Earth family (default: published);
+// opts.projector overrides the projection entirely — (lonDeg, latDeg) => {x, y}
+// in sphere-radii, y north — so the gallery can render ANY world map through
+// this same pipeline (densify, unwrap, precision, y-flip).
+function projectToSvg(lonDeg, latDeg, opts) {
+  const { x, y } = opts.projector
+    ? opts.projector(lonDeg, latDeg)
+    : project(latDeg * D2R, lonDeg * D2R, opts.coeffs);
   return `${fmt(x)} ${fmt(-y)}`;
 }
 
 // One ring -> "M x y L x y ... Z". Rings are unwrapped (antimeridian-safe) and
 // densified along great circles so edges follow their true projected curves.
-// opts.coeffs selects a member of the projection family (default: published).
-export function ringToPath(ringDeg, { maxDeg = 1, coeffs } = {}) {
+export function ringToPath(ringDeg, { maxDeg = 1, ...opts } = {}) {
   const dense = densifyRing(ringDeg, maxDeg);
   if (dense.length === 0) return "";
   let d = "";
   for (let i = 0; i < dense.length; i++) {
-    d += (i === 0 ? "M" : "L") + projectToSvg(dense[i][0], dense[i][1], coeffs);
+    d += (i === 0 ? "M" : "L") + projectToSvg(dense[i][0], dense[i][1], opts);
   }
   return d + "Z";
 }
@@ -69,16 +74,16 @@ export function graticuleLines({
   return lines;
 }
 
-function linePath(line, coeffs) {
+function linePath(line, opts) {
   let d = "";
   for (let i = 0; i < line.pts.length; i++) {
-    d += (i === 0 ? "M" : "L") + projectToSvg(line.pts[i][0], line.pts[i][1], coeffs);
+    d += (i === 0 ? "M" : "L") + projectToSvg(line.pts[i][0], line.pts[i][1], opts);
   }
   return d + (line.closed ? "Z" : "");
 }
 
 export function graticulePaths(opts = {}) {
-  return graticuleLines(opts).map((l) => linePath(l, opts.coeffs));
+  return graticuleLines(opts).map((l) => linePath(l, opts));
 }
 
 // --- map outline (the closed oval) ------------------------------------------
@@ -93,5 +98,5 @@ export function outlineLine({ samples = 180 } = {}) {
 }
 
 export function outlinePath(opts = {}) {
-  return linePath(outlineLine(opts), opts.coeffs);
+  return linePath(outlineLine(opts), opts);
 }
